@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import path from 'path';
+import ExcelJS from 'exceljs';
 import { resetDbSingleton, getDb } from '@/lib/db';
+import { runSeed } from '@/lib/seedCore';
 import { POST } from './route';
 
 function seedSmallDataset() {
@@ -57,12 +60,53 @@ describe('POST /api/proses', () => {
     expect(count.c).toBe(2);
   });
 
-  it('returns 400 when a mahasiswa is missing a nilai for some kriteria', async () => {
+  it('returns 400 naming the student (not a bare internal id) when nilai is incomplete', async () => {
     const db = getDb();
     db.prepare(`INSERT INTO kriteria (kode, nama, jenis, bobot, preference_function, parameter_p) VALUES ('C1','Kehadiran','benefit',1,'usual',NULL)`).run();
-    db.prepare(`INSERT INTO mahasiswa (alt_code, nim, nama) VALUES ('A1','1','Satu')`).run();
+    db.prepare(`INSERT INTO mahasiswa (alt_code, nim, nama) VALUES ('A1','236661099','Mahasiswa Baru')`).run();
 
     const res = await POST();
     expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('A1');
+    expect(body.error).toContain('236661099');
+    expect(body.error).toContain('Mahasiswa Baru');
+  });
+
+  it('reproduces Ranking_PROMETHEE.xlsx end-to-end through seed and the real DB (not just the bare engine)', async () => {
+    const db = getDb();
+    await runSeed(db, path.join(process.cwd(), 'dataset_promethee.xlsx'));
+
+    const res = await POST();
+    expect(res.status).toBe(200);
+
+    const stored = db
+      .prepare(
+        `SELECT h.ranking as ranking, m.alt_code as altCode, h.leaving_flow as leavingFlow,
+                h.entering_flow as enteringFlow, h.net_flow as netFlow
+         FROM hasil_ranking h JOIN mahasiswa m ON m.id = h.mahasiswa_id`
+      )
+      .all() as { ranking: number; altCode: string; leavingFlow: number; enteringFlow: number; netFlow: number }[];
+    const byAltCode = new Map(stored.map((r) => [r.altCode, r]));
+    expect(stored).toHaveLength(254);
+
+    const acuanWorkbook = new ExcelJS.Workbook();
+    await acuanWorkbook.xlsx.readFile(path.join(process.cwd(), 'Ranking_PROMETHEE.xlsx'));
+    const sheet = acuanWorkbook.getWorksheet('Sheet1')!;
+
+    let comparedRows = 0;
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const acuanRanking = Number(row.getCell(1).value);
+      const altCode = String(row.getCell(2).value);
+      const acuanNetFlow = Number(row.getCell(5).value);
+
+      const actual = byAltCode.get(altCode);
+      expect(actual, `missing result for ${altCode}`).toBeDefined();
+      expect(actual!.ranking).toBe(acuanRanking);
+      expect(Math.abs(actual!.netFlow - acuanNetFlow)).toBeLessThan(1e-6);
+      comparedRows += 1;
+    });
+    expect(comparedRows).toBe(254);
   });
 });

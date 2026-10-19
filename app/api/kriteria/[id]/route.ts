@@ -17,8 +17,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (body.preferenceFunction !== 'usual' && body.preferenceFunction !== 'linear') {
     return NextResponse.json({ error: "Preference function harus 'usual' atau 'linear'" }, { status: 400 });
   }
-  if (body.preferenceFunction === 'linear' && (body.parameterP === null || body.parameterP === undefined)) {
-    return NextResponse.json({ error: 'Parameter p wajib diisi untuk fungsi Linear' }, { status: 400 });
+  if (body.preferenceFunction === 'linear' && (typeof body.parameterP !== 'number' || !(body.parameterP > 0))) {
+    return NextResponse.json({ error: 'Parameter p wajib diisi dengan angka positif untuk fungsi Linear' }, { status: 400 });
   }
   if (typeof body.bobot !== 'number' || body.bobot <= 0) {
     return NextResponse.json({ error: 'Bobot harus berupa angka positif' }, { status: 400 });

@@ -24,6 +24,8 @@ export async function POST(request: Request) {
   const kriteriaIdByKode = new Map(kriteriaRows.map((k) => [k.kode, k.id]));
 
   const findByNim = db.prepare('SELECT id FROM mahasiswa WHERE nim = ?');
+  const findByAltCode = db.prepare('SELECT id FROM mahasiswa WHERE alt_code = ?');
+  const maxAltCode = db.prepare(`SELECT MAX(CAST(SUBSTR(alt_code, 2) AS INTEGER)) as maxNum FROM mahasiswa`);
   const insertMahasiswa = db.prepare('INSERT INTO mahasiswa (alt_code, nim, nama) VALUES (?, ?, ?)');
   const upsertPenilaian = db.prepare(
     `INSERT INTO penilaian (mahasiswa_id, kriteria_id, nilai) VALUES (?, ?, ?)
@@ -41,7 +43,16 @@ export async function POST(request: Request) {
         mahasiswaId = existing.id;
         updated += 1;
       } else {
-        const info = insertMahasiswa.run(row.altCode, row.nim, row.nama);
+        // The file's own alt_code may already belong to a different NIM (e.g. a
+        // student was deleted and renumbered, or a different dataset file is
+        // imported) — fall back to the next available code instead of letting
+        // the UNIQUE constraint on alt_code crash the whole import.
+        let altCode = row.altCode;
+        if (findByAltCode.get(altCode)) {
+          const maxNum = (maxAltCode.get() as { maxNum: number | null }).maxNum ?? 0;
+          altCode = `A${maxNum + 1}`;
+        }
+        const info = insertMahasiswa.run(altCode, row.nim, row.nama);
         mahasiswaId = Number(info.lastInsertRowid);
         created += 1;
       }

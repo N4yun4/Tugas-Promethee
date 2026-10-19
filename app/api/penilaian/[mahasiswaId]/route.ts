@@ -14,20 +14,31 @@ export async function PUT(request: Request, { params }: { params: { mahasiswaId:
   const kriteriaIdByKode = new Map(kriteriaRows.map((k) => [k.kode, k.id]));
 
   const nilaiInput: Record<string, unknown> = body.nilai ?? {};
+  const toWrite: { kriteriaId: number; nilai: number }[] = [];
   for (const kode of Object.keys(nilaiInput)) {
     const kriteriaId = kriteriaIdByKode.get(kode);
     if (!kriteriaId) {
       return NextResponse.json({ error: `Kriteria ${kode} tidak dikenal` }, { status: 400 });
     }
-    const nilai = Number(nilaiInput[kode]);
-    if (Number.isNaN(nilai)) {
+    const raw = nilaiInput[kode];
+    if (raw === null || raw === undefined || raw === '' || typeof raw === 'boolean') {
       return NextResponse.json({ error: `Nilai ${kode} harus berupa angka` }, { status: 400 });
     }
-    db.prepare(
-      `INSERT INTO penilaian (mahasiswa_id, kriteria_id, nilai) VALUES (?, ?, ?)
-       ON CONFLICT(mahasiswa_id, kriteria_id) DO UPDATE SET nilai = excluded.nilai`
-    ).run(params.mahasiswaId, kriteriaId, nilai);
+    const nilai = Number(raw);
+    if (!Number.isFinite(nilai)) {
+      return NextResponse.json({ error: `Nilai ${kode} harus berupa angka` }, { status: 400 });
+    }
+    toWrite.push({ kriteriaId, nilai });
   }
+
+  const upsert = db.prepare(
+    `INSERT INTO penilaian (mahasiswa_id, kriteria_id, nilai) VALUES (?, ?, ?)
+     ON CONFLICT(mahasiswa_id, kriteria_id) DO UPDATE SET nilai = excluded.nilai`
+  );
+  const tx = db.transaction(() => {
+    for (const w of toWrite) upsert.run(params.mahasiswaId, w.kriteriaId, w.nilai);
+  });
+  tx();
 
   const updated = db
     .prepare(

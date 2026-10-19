@@ -46,4 +46,23 @@ describe('POST /api/penilaian/import', () => {
     const res = await POST(new Request('http://localhost/api/penilaian/import', { method: 'POST', body: formData }));
     expect(res.status).toBe(400);
   });
+
+  it('assigns a fresh alt_code instead of crashing when a new student reuses an existing alt_code', async () => {
+    const db = getDb();
+    // An existing student already holds alt_code 'A2' under a different NIM than the import row below.
+    db.prepare(`INSERT INTO mahasiswa (alt_code, nim, nama) VALUES ('A2','111111111','Existing A2')`).run();
+
+    const formData = new FormData();
+    formData.append('file', await buildTestWorkbook(), 'dataset.xlsx');
+
+    const res = await POST(new Request('http://localhost/api/penilaian/import', { method: 'POST', body: formData }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.created).toBe(2);
+    expect(body.updated).toBe(0);
+
+    const rows = db.prepare('SELECT alt_code as altCode, nim FROM mahasiswa ORDER BY id').all() as { altCode: string; nim: string }[];
+    const altCodes = rows.map((r) => r.altCode);
+    expect(new Set(altCodes).size).toBe(altCodes.length);
+  });
 });

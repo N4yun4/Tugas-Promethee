@@ -15,18 +15,24 @@ export function ImportButton({ onImported }: { onImported: () => void }) {
 
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('/api/penilaian/import', { method: 'POST', body: formData });
-    const body = await res.json();
 
-    if (!res.ok) {
+    try {
+      const res = await fetch('/api/penilaian/import', { method: 'POST', body: formData });
+      const body = await res.json().catch(() => ({ error: 'Server mengembalikan respons yang tidak valid' }));
+
+      if (!res.ok) {
+        setStatus(null);
+        setError(body.error ?? 'Gagal mengimpor file');
+        return;
+      }
+
+      setStatus(`Impor selesai: ${body.created} data baru, ${body.updated} data diperbarui.`);
+      if (inputRef.current) inputRef.current.value = '';
+      onImported();
+    } catch {
       setStatus(null);
-      setError(body.error ?? 'Gagal mengimpor file');
-      return;
+      setError('Gagal menghubungi server. Coba lagi.');
     }
-
-    setStatus(`Impor selesai: ${body.created} data baru, ${body.updated} data diperbarui.`);
-    if (inputRef.current) inputRef.current.value = '';
-    onImported();
   }
 
   return (

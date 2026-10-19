@@ -24,15 +24,20 @@ export default function ProsesPage() {
     setRunning(true);
     setError(null);
     setResult(null);
-    const res = await fetch('/api/proses', { method: 'POST' });
-    const body = await res.json();
-    setRunning(false);
-    if (!res.ok) {
-      setError(body.error ?? 'Proses PROMETHEE gagal');
-      return;
+    try {
+      const res = await fetch('/api/proses', { method: 'POST' });
+      const body = await res.json().catch(() => ({ error: 'Server mengembalikan respons yang tidak valid' }));
+      if (!res.ok) {
+        setError(body.error ?? 'Proses PROMETHEE gagal');
+        return;
+      }
+      setResult(body);
+      router.refresh();
+    } catch {
+      setError('Gagal menghubungi server. Coba lagi.');
+    } finally {
+      setRunning(false);
     }
-    setResult(body);
-    router.refresh();
   }
 
   return (

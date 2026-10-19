@@ -7,7 +7,12 @@ export const dynamic = 'force-dynamic';
 export async function POST() {
   const db = getDb();
 
-  const mahasiswaRows = db.prepare('SELECT id FROM mahasiswa').all() as { id: number }[];
+  const mahasiswaRows = db.prepare('SELECT id, alt_code as altCode, nim, nama FROM mahasiswa').all() as {
+    id: number;
+    altCode: string;
+    nim: string;
+    nama: string;
+  }[];
   if (mahasiswaRows.length === 0) {
     return NextResponse.json({ error: 'Tidak ada data mahasiswa untuk diproses' }, { status: 400 });
   }
@@ -42,7 +47,9 @@ export async function POST() {
     const nilai = nilaiByMahasiswa.get(m.id);
     if (!nilai || engineKriteria.some((k) => nilai[k.kode] === undefined)) {
       return NextResponse.json(
-        { error: `Mahasiswa id ${m.id} belum memiliki nilai lengkap untuk semua kriteria` },
+        {
+          error: `${m.altCode} (NIM ${m.nim}, ${m.nama}) belum memiliki nilai lengkap untuk semua kriteria`,
+        },
         { status: 400 }
       );
     }
