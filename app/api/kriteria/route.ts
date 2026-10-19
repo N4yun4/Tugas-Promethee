@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { mapKriteriaRow } from '@/lib/mappers';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const db = getDb();
   const rows = db.prepare('SELECT * FROM kriteria ORDER BY kode').all();

@@ -8,9 +8,24 @@ import { createRequire } from 'module';
 // under `vitest run` even though Node itself has the module. Loading it
 // through Node's own `require` (via createRequire) bypasses Vite's import
 // analysis entirely and resolves correctly in both `next dev`/`next build`
-// and `vitest run`.
+// and `vitest run`. The installed @types/node also has no declarations for
+// this still-experimental module, so the raw shape is typed locally below
+// instead of via `typeof import('node:sqlite')`.
+interface RawStatement {
+  run(...params: any[]): { changes: number; lastInsertRowid: number | bigint };
+  get(...params: any[]): any;
+  all(...params: any[]): any[];
+}
+interface RawDatabase {
+  exec(sql: string): void;
+  prepare(sql: string): RawStatement;
+  close(): void;
+}
+
 const nodeRequire = createRequire(import.meta.url);
-const { DatabaseSync } = nodeRequire('node:sqlite') as typeof import('node:sqlite');
+const { DatabaseSync } = nodeRequire('node:sqlite') as {
+  DatabaseSync: new (path: string) => RawDatabase;
+};
 
 export const DEFAULT_DB_PATH = path.join(process.cwd(), 'data', 'spk.db');
 
@@ -77,7 +92,7 @@ export interface Db {
   close(): void;
 }
 
-function wrap(raw: DatabaseSync): Db {
+function wrap(raw: RawDatabase): Db {
   return {
     prepare(sql: string): PreparedStatement {
       const stmt = raw.prepare(sql);

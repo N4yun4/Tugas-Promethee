@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { generateRankingExcel } from '@/lib/excel';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const db = getDb();
   const rows = db
@@ -19,7 +21,7 @@ export async function GET() {
   }
 
   const buffer = await generateRankingExcel(rows);
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename="Ranking_PROMETHEE.xlsx"',

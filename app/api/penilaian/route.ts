@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const db = getDb();
   const mahasiswaRows = db.prepare('SELECT * FROM mahasiswa ORDER BY CAST(SUBSTR(alt_code, 2) AS INTEGER)').all() as any[];

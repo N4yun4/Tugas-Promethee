@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { parseMatriksKeputusanBuffer } from '@/lib/excel';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   const db = getDb();
   const formData = await request.formData();

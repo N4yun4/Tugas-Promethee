@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { mapMahasiswaRow } from '@/lib/mappers';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const db = getDb();
   const row = db.prepare('SELECT * FROM mahasiswa WHERE id = ?').get(params.id);

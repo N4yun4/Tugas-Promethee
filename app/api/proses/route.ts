@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { runPromethee, type Alternatif, type Kriteria as EngineKriteria } from '@/lib/promethee';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   const db = getDb();
 
