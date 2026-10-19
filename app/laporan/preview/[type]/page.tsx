@@ -1,6 +1,8 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDb } from '@/lib/db';
 import { PrintButton } from './PrintButton';
+import { IconChevronLeft } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,15 +16,21 @@ export default function PreviewLaporanPage({ params }: { params: { type: string 
   const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="space-y-4">
-      <div className="print:hidden flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Preview Laporan</h1>
+    <div className="space-y-5">
+      <div className="print:hidden flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Link href="/laporan" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            <IconChevronLeft className="h-4 w-4" />
+            Kembali ke Laporan
+          </Link>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Preview Laporan</h1>
+        </div>
         <PrintButton />
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 print:border-0 print:p-0">
-        <h2 className="text-center text-lg font-semibold">Laporan {labelFor(type)}</h2>
-        <p className="text-center text-sm text-slate-500">Tanggal cetak: {tanggal}</p>
+      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none">
+        <h2 className="text-center text-lg font-semibold text-slate-900">Laporan {labelFor(type)}</h2>
+        <p className="text-center text-sm text-muted">Tanggal cetak: {tanggal}</p>
         <div className="mt-4">{renderTable(type, db)}</div>
       </div>
     </div>

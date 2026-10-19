@@ -1,6 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Code:wght@500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --color-primary: 30 64 175; /* #1E40AF */
+  --color-primary-foreground: 255 255 255;
+  --color-secondary: 59 130 246; /* #3B82F6 */
+  --color-accent: 180 83 9; /* #B45309 (darkened from #D97706 for 4.5:1 on white) */
+  --color-background: 248 250 252; /* #F8FAFC */
+  --color-surface: 255 255 255;
+  --color-foreground: 15 23 42; /* slate-900, stronger than #1E3A8A for body text contrast */
+  --color-muted: 100 116 139; /* slate-500 */
+  --color-muted-bg: 241 245 249; /* slate-100 */
+  --color-border: 226 232 240; /* slate-200 */
+  --color-destructive: 220 38 38;
+  --color-ring: 30 64 175;
+}
+
+* {
+  border-color: rgb(var(--color-border));
+}
+
+body {
+  font-family: 'Fira Sans', ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+.font-mono,
+code,
+.tabular-nums {
+  font-family: 'Fira Code', ui-monospace, 'SFMono-Regular', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgb(var(--color-primary) / 0.15);
+}
+
+*:focus-visible {
+  outline: 2px solid rgb(var(--color-ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 @media print {
   body {
