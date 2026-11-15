@@ -15,17 +15,17 @@ export default function RankingPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Hasil Ranking</h1>
-          <p className="mt-1 text-sm text-muted">Diurutkan berdasarkan Net Flow dari yang tertinggi.</p>
+          <h1 className="page-title">Hasil Ranking</h1>
+          <p className="page-subtitle">Diurutkan berdasarkan Net Flow dari yang tertinggi.</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted-bg px-3 py-1 text-sm font-medium text-slate-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-sm font-semibold text-primary">
           <IconTrophy className="h-4 w-4 text-accent" />
           {rows.length} mahasiswa
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
           <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
             Belum ada hasil. Jalankan perhitungan terlebih dahulu di halaman{' '}
@@ -36,14 +36,14 @@ export default function RankingPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div className="card overflow-hidden">
           <div className="max-h-[70vh] overflow-auto">
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 z-10 bg-muted-bg text-xs font-medium uppercase tracking-wide text-muted shadow-sm">
-                <tr>
+              <thead className="sticky top-0 z-10 table-head shadow-sm">
+                <tr className="whitespace-nowrap">
                   <th className="px-4 py-3">Peringkat</th>
                   <th className="px-4 py-3">NIM</th>
-                  <th className="px-4 py-3">Nama</th>
+                  <th className="min-w-[12rem] px-4 py-3">Nama</th>
                   <th className="px-4 py-3 text-right">Leaving Flow</th>
                   <th className="px-4 py-3 text-right">Entering Flow</th>
                   <th className="px-4 py-3 text-right">Net Flow</th>
@@ -51,7 +51,7 @@ export default function RankingPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <tr key={r.altCode} className={`transition-colors hover:bg-muted-bg/60 ${r.ranking <= 3 ? 'bg-accent/5' : ''}`}>
+                  <tr key={r.altCode} className={`table-row ${r.ranking <= 3 ? 'bg-accent/5' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         {r.ranking <= 3 ? (

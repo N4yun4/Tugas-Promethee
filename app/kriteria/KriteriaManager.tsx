@@ -5,6 +5,7 @@ import type { Kriteria } from '@/lib/types';
 import { useAppState, setAppState } from '@/lib/useAppState';
 import { updateKriteria, type KriteriaInput } from '@/lib/store';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { ModalBackdrop } from '@/components/ModalBackdrop';
 import { IconPencil, IconX } from '@/components/icons';
 
 export function KriteriaManager() {
@@ -23,15 +24,15 @@ export function KriteriaManager() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Kriteria</h1>
-        <p className="mt-1 text-sm text-muted">Bobot dan fungsi preferensi lima kriteria penilaian PROMETHEE.</p>
+        <h1 className="page-title">Data Kriteria</h1>
+        <p className="page-subtitle">Bobot dan fungsi preferensi lima kriteria penilaian PROMETHEE.</p>
       </div>
 
 
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-muted-bg text-xs font-medium uppercase tracking-wide text-muted">
+            <thead className="table-head">
               <tr>
                 <th className="px-4 py-3">Kode</th>
                 <th className="px-4 py-3">Kriteria</th>
@@ -44,9 +45,9 @@ export function KriteriaManager() {
             </thead>
             <tbody className="divide-y divide-border">
               {initialData.map((k) => (
-                <tr key={k.id} className="transition-colors hover:bg-muted-bg/60">
+                <tr key={k.id} className="table-row">
                   <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary">{k.kode}</span>
+                    <span className="chip-kode">{k.kode}</span>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900">{k.nama}</td>
                   <td className="px-4 py-3">
@@ -66,7 +67,7 @@ export function KriteriaManager() {
                       onClick={() => setEditing(k)}
                       aria-label={`Edit kriteria ${k.kode}`}
                       title="Edit"
-                      className="rounded-md p-2 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary"
+                      className="btn-icon"
                     >
                       <IconPencil className="h-4 w-4" />
                     </button>
@@ -114,51 +115,51 @@ function KriteriaFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
+    <ModalBackdrop onClose={onClose}>
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-xl"
+        className="modal-panel"
       >
         <div className="flex items-start justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-extrabold text-ink">
             Edit {kriteria.kode} &middot; {kriteria.nama}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-md p-1 text-muted hover:bg-muted-bg hover:text-slate-900">
+          <button type="button" onClick={onClose} aria-label="Tutup" className="btn-icon -mr-2 -mt-1">
             <IconX className="h-5 w-5" />
           </button>
         </div>
         {error && (
-          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}
         <div>
-          <label className="block text-sm font-medium text-slate-700">Jenis</label>
+          <label className="label">Jenis</label>
           <select
             value={jenis}
             onChange={(e) => setJenis(e.target.value as 'benefit' | 'cost')}
-            className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm transition-colors focus:border-primary"
+            className="input mt-1.5"
           >
             <option value="benefit">Benefit</option>
             <option value="cost">Cost</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Bobot</label>
+          <label className="label">Bobot</label>
           <input
             value={bobot}
             onChange={(e) => setBobot(e.target.value)}
             inputMode="decimal"
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 font-mono text-sm transition-colors focus:border-primary"
+            className="input mt-1.5 font-mono"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Fungsi Preferensi</label>
+          <label className="label">Fungsi Preferensi</label>
           <select
             value={preferenceFunction}
             onChange={(e) => setPreferenceFunction(e.target.value as 'usual' | 'linear')}
-            className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm transition-colors focus:border-primary"
+            className="input mt-1.5"
           >
             <option value="usual">Tipe I - Usual</option>
             <option value="linear">Tipe III - Linear</option>
@@ -166,28 +167,28 @@ function KriteriaFormModal({
         </div>
         {preferenceFunction === 'linear' && (
           <div>
-            <label className="block text-sm font-medium text-slate-700">Parameter p</label>
+            <label className="label">Parameter p</label>
             <input
               value={parameterP}
               onChange={(e) => setParameterP(e.target.value)}
               inputMode="decimal"
-              className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 font-mono text-sm transition-colors focus:border-primary"
+              className="input mt-1.5 font-mono"
             />
             <p className="mt-1.5 text-xs text-muted">Harus berupa angka positif.</p>
           </div>
         )}
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg">
+          <button type="button" onClick={onClose} className="btn-secondary">
             Batal
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            className="btn-primary"
           >
             Simpan
           </button>
         </div>
       </form>
-    </div>
+    </ModalBackdrop>
   );
 }

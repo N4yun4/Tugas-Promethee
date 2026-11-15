@@ -5,6 +5,7 @@ import type { Mahasiswa } from '@/lib/types';
 import { useAppState, setAppState } from '@/lib/useAppState';
 import { createMahasiswa, updateMahasiswa, deleteMahasiswa, getMahasiswaSorted, type MahasiswaInput } from '@/lib/store';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { ModalBackdrop } from '@/components/ModalBackdrop';
 import { Pagination } from '@/components/Pagination';
 import { IconSearch, IconPlus, IconPencil, IconTrash, IconUsers, IconX } from '@/components/icons';
 
@@ -51,15 +52,15 @@ export function MahasiswaManager() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Mahasiswa</h1>
-          <p className="mt-1 text-sm text-muted">Kelola alternatif yang diproses dalam PROMETHEE II.</p>
+          <h1 className="page-title">Data Mahasiswa</h1>
+          <p className="page-subtitle">Kelola alternatif yang diproses dalam PROMETHEE II.</p>
         </div>
         <button
           onClick={() => {
             setEditing(null);
             setShowForm(true);
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          className="btn-primary"
         >
           <IconPlus className="h-4 w-4" />
           Tambah Mahasiswa
@@ -67,7 +68,7 @@ export function MahasiswaManager() {
       </div>
 
       {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="alert-error flex items-center justify-between gap-3">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="shrink-0 rounded p-1 hover:bg-red-100" aria-label="Tutup pesan error">
             <IconX className="h-4 w-4" />
@@ -85,14 +86,14 @@ export function MahasiswaManager() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full rounded-lg border border-border bg-surface py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm transition-colors focus:border-primary"
+          className="input pl-10 shadow-card"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-muted-bg text-xs font-medium uppercase tracking-wide text-muted">
+            <thead className="table-head">
               <tr>
                 <th className="px-4 py-3">Alt.</th>
                 <th className="px-4 py-3">NIM</th>
@@ -103,7 +104,7 @@ export function MahasiswaManager() {
             </thead>
             <tbody className="divide-y divide-border">
               {pageRows.map((m) => (
-                <tr key={m.id} className="transition-colors hover:bg-muted-bg/60">
+                <tr key={m.id} className="table-row">
                   <td className="px-4 py-3 font-mono text-slate-600">{m.altCode}</td>
                   <td className="px-4 py-3 font-mono tabular-nums text-slate-700">{m.nim}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{m.nama}</td>
@@ -117,7 +118,7 @@ export function MahasiswaManager() {
                         }}
                         aria-label={`Edit ${m.nama}`}
                         title="Edit"
-                        className="rounded-md p-2 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary"
+                        className="btn-icon"
                       >
                         <IconPencil className="h-4 w-4" />
                       </button>
@@ -125,7 +126,7 @@ export function MahasiswaManager() {
                         onClick={() => handleDelete(m)}
                         aria-label={`Hapus ${m.nama}`}
                         title="Hapus"
-                        className="rounded-md p-2 text-slate-500 transition-colors hover:bg-red-50 hover:text-destructive"
+                        className="btn-icon-danger"
                       >
                         <IconTrash className="h-4 w-4" />
                       </button>
@@ -186,43 +187,43 @@ function MahasiswaFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="w-full max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-xl">
+    <ModalBackdrop onClose={onClose}>
+      <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="modal-panel">
         <div className="flex items-start justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">{mahasiswa ? 'Edit Mahasiswa' : 'Tambah Mahasiswa'}</h2>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-md p-1 text-muted hover:bg-muted-bg hover:text-slate-900">
+          <h2 className="text-lg font-extrabold text-ink">{mahasiswa ? 'Edit Mahasiswa' : 'Tambah Mahasiswa'}</h2>
+          <button type="button" onClick={onClose} aria-label="Tutup" className="btn-icon -mr-2 -mt-1">
             <IconX className="h-5 w-5" />
           </button>
         </div>
         {error && (
-          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}
         <div>
-          <label htmlFor="mhs-nim" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="mhs-nim" className="label">
             NIM
           </label>
           <input
             id="mhs-nim"
             value={nim}
             onChange={(e) => setNim(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors focus:border-primary"
+            className="input mt-1.5"
           />
         </div>
         <div>
-          <label htmlFor="mhs-nama" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="mhs-nama" className="label">
             Nama
           </label>
           <input
             id="mhs-nama"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors focus:border-primary"
+            className="input mt-1.5"
           />
         </div>
         <div>
-          <label htmlFor="mhs-angkatan" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="mhs-angkatan" className="label">
             Angkatan
           </label>
           <input
@@ -230,18 +231,18 @@ function MahasiswaFormModal({
             value={angkatan ?? ''}
             onChange={(e) => setAngkatan(e.target.value)}
             placeholder="Opsional"
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors placeholder:text-slate-400 focus:border-primary"
+            className="input mt-1.5"
           />
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg">
+          <button type="button" onClick={onClose} className="btn-secondary">
             Batal
           </button>
-          <button type="submit" className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+          <button type="submit" className="btn-primary">
             Simpan
           </button>
         </div>
       </form>
-    </div>
+    </ModalBackdrop>
   );
 }

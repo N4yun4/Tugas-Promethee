@@ -26,7 +26,7 @@ export function Pagination({
           disabled={page <= 1}
           onClick={onPrev}
           aria-label="Halaman sebelumnya"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-ink transition duration-200 hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconChevronLeft className="h-4 w-4" />
         </button>
@@ -37,7 +37,7 @@ export function Pagination({
           disabled={page >= totalPages}
           onClick={onNext}
           aria-label="Halaman berikutnya"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-ink transition duration-200 hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <IconChevronRight className="h-4 w-4" />
         </button>

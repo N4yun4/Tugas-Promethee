@@ -66,28 +66,31 @@ export default function ProsesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Proses PROMETHEE</h1>
-        <p className="mt-1 text-sm text-muted">Hitung leaving flow, entering flow, dan net flow untuk seluruh mahasiswa.</p>
+        <h1 className="page-title">Proses PROMETHEE</h1>
+        <p className="page-subtitle">Hitung leaving flow, entering flow, dan net flow untuk seluruh mahasiswa.</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-        <ol className="space-y-1">
+      <div className="card p-5">
+        <ol className="grid gap-1 sm:grid-cols-2">
           {TAHAPAN.map((t, i) => {
             const stepState = completed ? 'done' : i < activeStep ? 'done' : i === activeStep && running ? 'active' : 'pending';
             return (
-              <li key={t} className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-200">
+              <li
+                key={t}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200 ${stepState === 'active' ? 'bg-primary/5' : ''}`}
+              >
                 <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-200 ${
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors duration-200 ${
                     stepState === 'done'
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-emerald-500 text-white'
                       : stepState === 'active'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted-bg text-slate-400'
+                        ? 'bg-gradient-to-br from-primary to-secondary text-white shadow-glow'
+                        : 'bg-primary/10 text-primary'
                   }`}
                 >
-                  {stepState === 'done' ? <IconCheckCircle className="h-3.5 w-3.5" /> : i + 1}
+                  {stepState === 'done' ? <IconCheckCircle className="h-4 w-4" /> : i + 1}
                 </span>
-                <span className={`text-sm transition-colors duration-200 ${stepState === 'pending' ? 'text-muted' : 'text-slate-800'}`}>{t}</span>
+                <span className={`text-sm font-semibold transition-colors duration-200 ${stepState === 'pending' ? 'text-muted' : 'text-ink'}`}>{t}</span>
               </li>
             );
           })}
@@ -95,14 +98,14 @@ export default function ProsesPage() {
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="alert-error flex items-start gap-2" role="alert">
           <IconAlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {result && (
-        <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
           <IconCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Proses selesai untuk <span className="font-semibold">{result.alternatifCount}</span> alternatif dalam{' '}
@@ -116,7 +119,7 @@ export default function ProsesPage() {
         <button
           onClick={handleRun}
           disabled={running || !state}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-primary"
         >
           <IconPlay className="h-4 w-4" />
           {running ? 'Memproses...' : 'Jalankan Proses'}
@@ -124,7 +127,7 @@ export default function ProsesPage() {
         {result && (
           <Link
             href="/ranking"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-muted-bg"
+            className="btn-secondary"
           >
             <IconTrophy className="h-4 w-4" />
             Lihat Hasil Ranking

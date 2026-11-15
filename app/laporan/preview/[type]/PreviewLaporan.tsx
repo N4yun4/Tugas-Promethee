@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAppState } from '@/lib/useAppState';
+import { formatNilai } from '@/lib/format';
 import { getMahasiswaSorted, getPenilaianRows, getRankingRows, type AppState } from '@/lib/store';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { IconChevronLeft } from '@/components/icons';
@@ -28,12 +29,12 @@ export function PreviewLaporan({ type }: { type: LaporanType }) {
             <IconChevronLeft className="h-4 w-4" />
             Kembali ke Laporan
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Preview Laporan</h1>
+          <h1 className="mt-2 page-title">Preview Laporan</h1>
         </div>
         <PrintButton />
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none">
+      <div className="card p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <h2 className="text-center text-lg font-semibold text-slate-900">Laporan {LABEL[type]}</h2>
         <p className="text-center text-sm text-muted">Tanggal cetak: {tanggal}</p>
         <div className="mt-4 overflow-x-auto">
@@ -121,7 +122,7 @@ function ReportTable({ type, state }: { type: LaporanType; state: AppState }) {
               <td className={td}>{r.nama}</td>
               {['C1', 'C2', 'C3', 'C4', 'C5'].map((k) => (
                 <td key={k} className={`${td} font-mono`}>
-                  {r.nilai[k] ?? '-'}
+                  {r.nilai[k] !== undefined ? formatNilai(r.nilai[k]) : '-'}
                 </td>
               ))}
             </tr>

@@ -1,22 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Code:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Modern Indigo, 60-30-10:
+ *   60% dominant  - background + white surfaces
+ *   30% secondary - ink (deep indigo) sidebar, indigo tints on headers/icons/borders
+ *   10% accent    - indigo->violet gradient on primary actions and active state only
+ */
 :root {
-  --color-primary: 30 64 175; /* #1E40AF */
+  --color-primary: 79 70 229; /* #4F46E5 indigo */
   --color-primary-foreground: 255 255 255;
-  --color-secondary: 59 130 246; /* #3B82F6 */
-  --color-accent: 180 83 9; /* #B45309 (darkened from #D97706 for 4.5:1 on white) */
-  --color-background: 248 250 252; /* #F8FAFC */
+  --color-secondary: 124 58 237; /* #7C3AED violet */
+  --color-ink: 30 27 75; /* #1E1B4B deep indigo */
+  --color-accent: 180 83 9; /* #B45309 gold, medals only */
+  --color-background: 245 246 255; /* #F5F6FF */
   --color-surface: 255 255 255;
-  --color-foreground: 15 23 42; /* slate-900, stronger than #1E3A8A for body text contrast */
-  --color-muted: 100 116 139; /* slate-500 */
-  --color-muted-bg: 241 245 249; /* slate-100 */
-  --color-border: 226 232 240; /* slate-200 */
+  --color-foreground: 15 23 42;
+  --color-muted: 100 116 139; /* #64748B, 4.7:1 on white */
+  --color-muted-bg: 238 240 252; /* #EEF0FC */
+  --color-border: 226 229 244; /* #E2E5F4 */
   --color-destructive: 220 38 38;
-  --color-ring: 30 64 175;
+  --color-ring: 99 102 241; /* #6366F1 */
 }
 
 * {
@@ -24,8 +31,8 @@
 }
 
 body {
-  font-family: 'Fira Sans', ui-sans-serif, system-ui, sans-serif;
-  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  color: rgb(var(--color-foreground));
 }
 
 .font-mono,
@@ -36,13 +43,67 @@ code,
 }
 
 ::selection {
-  background: rgb(var(--color-primary) / 0.15);
+  background: rgb(var(--color-primary) / 0.18);
 }
 
 *:focus-visible {
   outline: 2px solid rgb(var(--color-ring));
   outline-offset: 2px;
-  border-radius: 2px;
+}
+
+@layer components {
+  .page-title {
+    @apply text-2xl font-extrabold tracking-tight text-ink sm:text-[1.75rem];
+  }
+  .page-subtitle {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  .card {
+    @apply rounded-2xl border border-border bg-surface shadow-card;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow transition duration-200 hover:brightness-110 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition duration-200 hover:border-primary/40 hover:bg-primary/5 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition duration-200 hover:bg-primary/10 hover:text-primary;
+  }
+  .btn-icon-danger {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition duration-200 hover:bg-red-50 hover:text-destructive;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-slate-900 outline-none transition duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10;
+  }
+  .label {
+    @apply block text-sm font-semibold text-ink;
+  }
+
+  .table-head {
+    @apply bg-muted-bg text-xs font-bold uppercase tracking-wider text-primary;
+  }
+  .table-row {
+    @apply transition-colors duration-150 hover:bg-primary/[0.04];
+  }
+
+  .chip-kode {
+    @apply inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-primary;
+  }
+
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm;
+  }
+  .modal-panel {
+    @apply w-full max-w-md space-y-4 rounded-3xl bg-surface p-6 shadow-2xl;
+  }
+
+  .alert-error {
+    @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

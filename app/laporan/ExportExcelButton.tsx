@@ -41,7 +41,7 @@ export function ExportExcelButton() {
       <button
         onClick={handleExport}
         disabled={busy || !state}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg disabled:opacity-60"
+        className="btn-secondary"
       >
         <IconDownload className="h-4 w-4" />
         {busy ? 'Membuat file...' : 'Export Excel'}

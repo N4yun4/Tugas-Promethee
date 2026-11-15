@@ -6,6 +6,8 @@ import type { PenilaianRow } from '@/lib/types';
 import { useAppState, setAppState } from '@/lib/useAppState';
 import { updatePenilaian, getPenilaianRows, KRITERIA_KODE } from '@/lib/store';
 import { PageSkeleton } from '@/components/PageSkeleton';
+import { ModalBackdrop } from '@/components/ModalBackdrop';
+import { formatNilai } from '@/lib/format';
 import { Pagination } from '@/components/Pagination';
 import { ImportButton } from './ImportButton';
 import { IconSearch, IconPencil, IconClipboard, IconX } from '@/components/icons';
@@ -48,8 +50,8 @@ export function PenilaianManager() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Penilaian</h1>
-          <p className="mt-1 text-sm text-muted">Nilai C1&ndash;C5 setiap mahasiswa sebagai input PROMETHEE.</p>
+          <h1 className="page-title">Data Penilaian</h1>
+          <p className="page-subtitle">Nilai C1&ndash;C5 setiap mahasiswa sebagai input PROMETHEE.</p>
         </div>
         <ImportButton />
       </div>
@@ -64,14 +66,14 @@ export function PenilaianManager() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full rounded-lg border border-border bg-surface py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm transition-colors focus:border-primary"
+          className="input pl-10 shadow-card"
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-muted-bg text-xs font-medium uppercase tracking-wide text-muted">
+            <thead className="table-head">
               <tr>
                 <th className="px-4 py-3">Alt.</th>
                 <th className="px-4 py-3">NIM</th>
@@ -86,13 +88,13 @@ export function PenilaianManager() {
             </thead>
             <tbody className="divide-y divide-border">
               {pageRows.map((r) => (
-                <tr key={r.mahasiswaId} className="transition-colors hover:bg-muted-bg/60">
+                <tr key={r.mahasiswaId} className="table-row">
                   <td className="px-4 py-3 font-mono text-slate-600">{r.altCode}</td>
                   <td className="px-4 py-3 font-mono tabular-nums text-slate-700">{r.nim}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{r.nama}</td>
                   {KRITERIA_KODE.map((k) => (
                     <td key={k} className="px-4 py-3 text-right font-mono tabular-nums text-slate-700">
-                      {r.nilai[k] ?? <span className="text-amber-600">&ndash;</span>}
+                      {r.nilai[k] !== undefined ? formatNilai(r.nilai[k]) : <span className="text-amber-600">&ndash;</span>}
                     </td>
                   ))}
                   <td className="px-4 py-3">
@@ -101,7 +103,7 @@ export function PenilaianManager() {
                         onClick={() => setEditing(r)}
                         aria-label={`Edit nilai ${r.nama}`}
                         title="Edit nilai"
-                        className="rounded-md p-2 text-slate-500 transition-colors hover:bg-primary/10 hover:text-primary"
+                        className="btn-icon"
                       >
                         <IconPencil className="h-4 w-4" />
                       </button>
@@ -109,7 +111,7 @@ export function PenilaianManager() {
                         href={`/penilaian/detail?id=${r.mahasiswaId}`}
                         aria-label={`Lihat detail ${r.nama}`}
                         title="Detail"
-                        className="rounded-md p-2 text-slate-500 transition-colors hover:bg-muted-bg hover:text-slate-900"
+                        className="btn-icon"
                       >
                         <IconClipboard className="h-4 w-4" />
                       </Link>
@@ -175,52 +177,52 @@ function PenilaianFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
+    <ModalBackdrop onClose={onClose}>
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-xl"
+        className="modal-panel"
       >
         <div className="flex items-start justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-extrabold text-ink">
             Edit Nilai &middot; {row.altCode} {row.nama}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-md p-1 text-muted hover:bg-muted-bg hover:text-slate-900">
+          <button type="button" onClick={onClose} aria-label="Tutup" className="btn-icon -mr-2 -mt-1">
             <IconX className="h-5 w-5" />
           </button>
         </div>
         {error && (
-          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="alert-error">
             {error}
           </p>
         )}
         <div className="grid grid-cols-2 gap-3">
           {KRITERIA_KODE.map((k) => (
             <div key={k}>
-              <label className="block text-sm font-medium text-slate-700">
+              <label className="label">
                 {k} <span className="font-normal text-muted">({KRITERIA_LABEL[k]})</span>
               </label>
               <input
                 value={values[k]}
                 onChange={(e) => setValues((v) => ({ ...v, [k]: e.target.value }))}
                 inputMode="decimal"
-                className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 font-mono text-sm transition-colors focus:border-primary"
+                className="input mt-1.5 font-mono"
               />
             </div>
           ))}
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg">
+          <button type="button" onClick={onClose} className="btn-secondary">
             Batal
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            className="btn-primary"
           >
             Simpan
           </button>
         </div>
       </form>
-    </div>
+    </ModalBackdrop>
   );
 }
