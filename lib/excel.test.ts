@@ -42,6 +42,18 @@ describe('parseMatriksKeputusanBuffer', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].nim).toBe('236661001');
   });
+
+  it('accepts a plain ArrayBuffer, as a browser File.arrayBuffer() returns', async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('03_Matriks_Keputusan');
+    sheet.addRow(['Alternatif', 'NIM', 'Nama', 'C1_Kehadiran', 'C2_Alfa', 'C3_Izin', 'C4_Sakit', 'C5_IPK']);
+    sheet.addRow(['A1', '236661001', 'Irvan Topa', 99.13, 0, 0, 0, 3.94]);
+    const bytes = new Uint8Array(await workbook.xlsx.writeBuffer());
+    const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+
+    const rows = await parseMatriksKeputusanBuffer(arrayBuffer);
+    expect(rows).toHaveLength(1);
+  });
 });
 
 describe('generateRankingExcel', () => {
@@ -49,6 +61,8 @@ describe('generateRankingExcel', () => {
     const buffer = await generateRankingExcel([
       { ranking: 1, altCode: 'A24', nim: '236661025', nama: 'Muhammad Syeh Pullah', leavingFlow: 0.458995, enteringFlow: 0, netFlow: 0.458995 },
     ]);
+    expect(Buffer.isBuffer(buffer)).toBe(false);
+    expect(buffer).toBeInstanceOf(Uint8Array);
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
     const sheet = workbook.getWorksheet('Ranking PROMETHEE')!;

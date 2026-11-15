@@ -1,18 +1,15 @@
-import { getDb } from '@/lib/db';
+'use client';
+
+import Link from 'next/link';
+import { useAppState } from '@/lib/useAppState';
+import { getRankingRows } from '@/lib/store';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { IconTrophy, IconMedal, IconAlertTriangle } from '@/components/icons';
 
-export const dynamic = 'force-dynamic';
-
 export default function RankingPage() {
-  const db = getDb();
-  const rows = db
-    .prepare(
-      `SELECT h.ranking as ranking, m.alt_code as altCode, m.nim as nim, m.nama as nama,
-              h.leaving_flow as leavingFlow, h.entering_flow as enteringFlow, h.net_flow as netFlow
-       FROM hasil_ranking h JOIN mahasiswa m ON m.id = h.mahasiswa_id
-       ORDER BY h.ranking ASC, m.alt_code ASC`
-    )
-    .all() as { ranking: number; altCode: string; nim: string; nama: string; leavingFlow: number; enteringFlow: number; netFlow: number }[];
+  const state = useAppState();
+  if (!state) return <PageSkeleton />;
+  const rows = getRankingRows(state);
 
   return (
     <div className="space-y-5">
@@ -30,7 +27,13 @@ export default function RankingPage() {
       {rows.length === 0 ? (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
           <IconAlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>Belum ada hasil. Jalankan Proses PROMETHEE terlebih dahulu di halaman Proses PROMETHEE.</p>
+          <p>
+            Belum ada hasil. Jalankan perhitungan terlebih dahulu di halaman{' '}
+            <Link href="/proses" className="font-medium underline">
+              Proses PROMETHEE
+            </Link>
+            .
+          </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">

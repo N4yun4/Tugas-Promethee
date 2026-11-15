@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAppState, setAppState } from '@/lib/useAppState';
+import { runProses } from '@/lib/store';
 import { IconPlay, IconCheckCircle, IconAlertTriangle, IconTrophy, IconChevronRight } from '@/components/icons';
 
 const TAHAPAN = [
@@ -15,8 +17,10 @@ const TAHAPAN = [
   'Net Flow',
 ];
 
+const MIN_VISIBLE_MS = TAHAPAN.length * 180;
+
 export default function ProsesPage() {
-  const router = useRouter();
+  const state = useAppState();
   const [running, setRunning] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [result, setResult] = useState<{ alternatifCount: number; durationMs: number; processedAt: string } | null>(null);
@@ -30,31 +34,26 @@ export default function ProsesPage() {
   }, []);
 
   async function handleRun() {
+    if (!state) return;
     setRunning(true);
     setError(null);
     setResult(null);
     setActiveStep(1);
 
-    // The server computes all steps in one pass; this staggers the stage
-    // indicators visually (per tahapan) while waiting, rather than claiming
-    // literal real-time server progress.
+    // The computation finishes in milliseconds; the stage indicators are
+    // staggered so the user can follow the tahapan, not as literal progress.
     stepTimer.current = setInterval(() => {
       setActiveStep((s) => (s < TAHAPAN.length - 1 ? s + 1 : s));
     }, 180);
 
     try {
-      const res = await fetch('/api/proses', { method: 'POST' });
-      const body = await res.json().catch(() => ({ error: 'Server mengembalikan respons yang tidak valid' }));
-      if (!res.ok) {
-        setError(body.error ?? 'Proses PROMETHEE gagal');
-        setActiveStep(0);
-        return;
-      }
+      const outcome = runProses(state, new Date());
+      await new Promise((resolve) => setTimeout(resolve, MIN_VISIBLE_MS));
+      setAppState(outcome.state);
       setActiveStep(TAHAPAN.length);
-      setResult(body);
-      router.refresh();
-    } catch {
-      setError('Gagal menghubungi server. Coba lagi.');
+      setResult({ alternatifCount: outcome.alternatifCount, durationMs: outcome.durationMs, processedAt: outcome.processedAt });
+    } catch (err) {
+      setError((err as Error).message || 'Proses PROMETHEE gagal');
       setActiveStep(0);
     } finally {
       if (stepTimer.current) clearInterval(stepTimer.current);
@@ -116,21 +115,21 @@ export default function ProsesPage() {
       <div className="flex flex-wrap gap-3">
         <button
           onClick={handleRun}
-          disabled={running}
+          disabled={running || !state}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <IconPlay className="h-4 w-4" />
           {running ? 'Memproses...' : 'Jalankan Proses'}
         </button>
         {result && (
-          <a
+          <Link
             href="/ranking"
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-muted-bg"
           >
             <IconTrophy className="h-4 w-4" />
             Lihat Hasil Ranking
             <IconChevronRight className="h-4 w-4" />
-          </a>
+          </Link>
         )}
       </div>
     </div>

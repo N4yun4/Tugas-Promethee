@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { IconUsers, IconSliders, IconClipboard, IconTrophy, IconFileText, IconDownload, IconChevronRight } from '@/components/icons';
+import { IconUsers, IconSliders, IconClipboard, IconTrophy, IconFileText, IconChevronRight } from '@/components/icons';
+import { ExportExcelButton } from './ExportExcelButton';
 
 const JENIS_LAPORAN = [
   { key: 'mahasiswa', label: 'Data Mahasiswa', description: 'Daftar seluruh alternatif (mahasiswa).', icon: IconUsers },
@@ -39,15 +40,7 @@ export default function LaporanPage() {
                   Preview
                   <IconChevronRight className="h-3.5 w-3.5" />
                 </Link>
-                {j.key === 'ranking' && (
-                  <a
-                    href="/api/laporan/export/excel"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg"
-                  >
-                    <IconDownload className="h-4 w-4" />
-                    Export Excel
-                  </a>
-                )}
+                {j.key === 'ranking' && <ExportExcelButton />}
               </div>
             </div>
           );

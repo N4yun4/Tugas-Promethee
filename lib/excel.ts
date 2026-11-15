@@ -53,9 +53,9 @@ export async function parseMatriksKeputusan(filePath: string): Promise<MatriksRo
   return parseWorksheetRows(sheet);
 }
 
-export async function parseMatriksKeputusanBuffer(buffer: Buffer): Promise<MatriksRow[]> {
+export async function parseMatriksKeputusanBuffer(data: ArrayBuffer | Uint8Array): Promise<MatriksRow[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer as any);
+  await workbook.xlsx.load(data as any);
   const sheet = workbook.getWorksheet('03_Matriks_Keputusan');
   if (!sheet) {
     throw new Error('Sheet 03_Matriks_Keputusan tidak ditemukan di file Excel');
@@ -73,7 +73,7 @@ export interface RankingExportRow {
   netFlow: number;
 }
 
-export async function generateRankingExcel(rows: RankingExportRow[]): Promise<Buffer> {
+export async function generateRankingExcel(rows: RankingExportRow[]): Promise<Uint8Array> {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Ranking PROMETHEE');
   sheet.columns = [
@@ -87,5 +87,5 @@ export async function generateRankingExcel(rows: RankingExportRow[]): Promise<Bu
   ];
   rows.forEach((r) => sheet.addRow(r));
   const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
+  return new Uint8Array(buffer as ArrayBuffer);
 }

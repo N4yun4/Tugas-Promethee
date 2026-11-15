@@ -1,38 +1,50 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Mahasiswa } from '@/lib/types';
-import { IconSearch, IconPlus, IconPencil, IconTrash, IconChevronLeft, IconChevronRight, IconUsers, IconX } from '@/components/icons';
+import { useAppState, setAppState } from '@/lib/useAppState';
+import { createMahasiswa, updateMahasiswa, deleteMahasiswa, getMahasiswaSorted, type MahasiswaInput } from '@/lib/store';
+import { PageSkeleton } from '@/components/PageSkeleton';
+import { Pagination } from '@/components/Pagination';
+import { IconSearch, IconPlus, IconPencil, IconTrash, IconUsers, IconX } from '@/components/icons';
 
 const PAGE_SIZE = 20;
 
-export function MahasiswaManager({ initialData }: { initialData: Mahasiswa[] }) {
-  const router = useRouter();
+export function MahasiswaManager() {
+  const state = useAppState();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Mahasiswa | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const all = useMemo(() => (state ? getMahasiswaSorted(state) : []), [state]);
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return initialData;
-    return initialData.filter((m) => m.nim.toLowerCase().includes(term) || m.nama.toLowerCase().includes(term));
-  }, [initialData, search]);
+    if (!term) return all;
+    return all.filter((m) => m.nim.toLowerCase().includes(term) || m.nama.toLowerCase().includes(term));
+  }, [all, search]);
+
+  if (!state) return <PageSkeleton />;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  async function handleDelete(m: Mahasiswa) {
-    if (!confirm(`Hapus ${m.nama} (${m.nim})? Semua nilai terkait juga akan terhapus.`)) return;
-    const res = await fetch(`/api/mahasiswa/${m.id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: 'Gagal menghapus mahasiswa' }));
-      setError(body.error ?? 'Gagal menghapus mahasiswa');
-      return;
+  function handleDelete(m: Mahasiswa) {
+    if (!state || !confirm(`Hapus ${m.nama} (${m.nim})? Semua nilai terkait juga akan terhapus.`)) return;
+    try {
+      setAppState(deleteMahasiswa(state, m.id));
+    } catch (err) {
+      setError((err as Error).message);
     }
-    router.refresh();
+  }
+
+  function handleSave(input: MahasiswaInput) {
+    if (!state) return;
+    const next = editing ? updateMahasiswa(state, editing.id, input) : createMahasiswa(state, input).state;
+    setAppState(next);
+    setShowForm(false);
   }
 
   return (
@@ -136,45 +148,16 @@ export function MahasiswaManager({ initialData }: { initialData: Mahasiswa[] }) 
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
-        <span>
-          Menampilkan <span className="font-medium text-slate-700">{pageRows.length}</span> dari{' '}
-          <span className="font-medium text-slate-700">{filtered.length}</span> mahasiswa
-        </span>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            aria-label="Halaman sebelumnya"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <IconChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="min-w-[5rem] text-center font-medium text-slate-700">
-            {page} / {totalPages}
-          </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            aria-label="Halaman berikutnya"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <IconChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        shown={pageRows.length}
+        total={filtered.length}
+        page={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setPage(currentPage - 1)}
+        onNext={() => setPage(currentPage + 1)}
+      />
 
-      {showForm && (
-        <MahasiswaFormModal
-          mahasiswa={editing}
-          onClose={() => setShowForm(false)}
-          onSaved={() => {
-            setShowForm(false);
-            router.refresh();
-          }}
-          onError={setError}
-        />
-      )}
+      {showForm && <MahasiswaFormModal mahasiswa={editing} onClose={() => setShowForm(false)} onSave={handleSave} />}
     </div>
   );
 }
@@ -182,95 +165,80 @@ export function MahasiswaManager({ initialData }: { initialData: Mahasiswa[] }) 
 function MahasiswaFormModal({
   mahasiswa,
   onClose,
-  onSaved,
-  onError,
+  onSave,
 }: {
   mahasiswa: Mahasiswa | null;
   onClose: () => void;
-  onSaved: () => void;
-  onError: (msg: string) => void;
+  onSave: (input: MahasiswaInput) => void;
 }) {
   const [nim, setNim] = useState(mahasiswa?.nim ?? '');
   const [nama, setNama] = useState(mahasiswa?.nama ?? '');
   const [angkatan, setAngkatan] = useState(mahasiswa?.angkatan ?? '');
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nim.trim() || !nama.trim()) {
-      onError('NIM dan nama wajib diisi');
-      return;
-    }
-    setSaving(true);
     try {
-      const url = mahasiswa ? `/api/mahasiswa/${mahasiswa.id}` : '/api/mahasiswa';
-      const method = mahasiswa ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nim, nama, angkatan: angkatan || null, programStudi: mahasiswa?.programStudi }),
-      });
-      const body = await res.json().catch(() => ({ error: 'Gagal menyimpan data' }));
-      if (!res.ok) {
-        onError(body.error ?? 'Gagal menyimpan data');
-        return;
-      }
-      onSaved();
-    } catch {
-      onError('Gagal menghubungi server. Coba lagi.');
-    } finally {
-      setSaving(false);
+      onSave({ nim, nama, angkatan: angkatan || null });
+    } catch (err) {
+      setError((err as Error).message);
     }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form
-        onSubmit={handleSubmit}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-xl"
-      >
+      <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="w-full max-w-md space-y-4 rounded-xl bg-surface p-6 shadow-xl">
         <div className="flex items-start justify-between">
           <h2 className="text-lg font-semibold text-slate-900">{mahasiswa ? 'Edit Mahasiswa' : 'Tambah Mahasiswa'}</h2>
           <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-md p-1 text-muted hover:bg-muted-bg hover:text-slate-900">
             <IconX className="h-5 w-5" />
           </button>
         </div>
+        {error && (
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div>
-          <label className="block text-sm font-medium text-slate-700">NIM</label>
+          <label htmlFor="mhs-nim" className="block text-sm font-medium text-slate-700">
+            NIM
+          </label>
           <input
+            id="mhs-nim"
             value={nim}
             onChange={(e) => setNim(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors focus:border-primary"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Nama</label>
+          <label htmlFor="mhs-nama" className="block text-sm font-medium text-slate-700">
+            Nama
+          </label>
           <input
+            id="mhs-nama"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors focus:border-primary"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700">Angkatan</label>
+          <label htmlFor="mhs-angkatan" className="block text-sm font-medium text-slate-700">
+            Angkatan
+          </label>
           <input
+            id="mhs-angkatan"
             value={angkatan ?? ''}
             onChange={(e) => setAngkatan(e.target.value)}
             placeholder="Opsional"
-            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors focus:border-primary placeholder:text-slate-400"
+            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2.5 text-sm transition-colors placeholder:text-slate-400 focus:border-primary"
           />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-muted-bg">
             Batal
           </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {saving ? 'Menyimpan...' : 'Simpan'}
+          <button type="submit" className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+            Simpan
           </button>
         </div>
       </form>

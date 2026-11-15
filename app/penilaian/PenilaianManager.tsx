@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { PenilaianRow } from '@/lib/types';
+import { useAppState, setAppState } from '@/lib/useAppState';
+import { updatePenilaian, getPenilaianRows, KRITERIA_KODE } from '@/lib/store';
+import { PageSkeleton } from '@/components/PageSkeleton';
+import { Pagination } from '@/components/Pagination';
 import { ImportButton } from './ImportButton';
-import { IconSearch, IconPencil, IconClipboard, IconChevronLeft, IconChevronRight, IconX } from '@/components/icons';
+import { IconSearch, IconPencil, IconClipboard, IconX } from '@/components/icons';
 
 const PAGE_SIZE = 20;
-const KRITERIA_KODE = ['C1', 'C2', 'C3', 'C4', 'C5'] as const;
 const KRITERIA_LABEL: Record<(typeof KRITERIA_KODE)[number], string> = {
   C1: 'Kehadiran',
   C2: 'Alfa',
@@ -17,21 +19,30 @@ const KRITERIA_LABEL: Record<(typeof KRITERIA_KODE)[number], string> = {
   C5: 'IPK',
 };
 
-export function PenilaianManager({ initialData }: { initialData: PenilaianRow[] }) {
-  const router = useRouter();
+export function PenilaianManager() {
+  const state = useAppState();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<PenilaianRow | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
+  const all = useMemo(() => (state ? getPenilaianRows(state) : []), [state]);
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return initialData;
-    return initialData.filter((r) => r.nim.toLowerCase().includes(term) || r.nama.toLowerCase().includes(term));
-  }, [initialData, search]);
+    if (!term) return all;
+    return all.filter((r) => r.nim.toLowerCase().includes(term) || r.nama.toLowerCase().includes(term));
+  }, [all, search]);
+
+  if (!state) return <PageSkeleton />;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  function handleSave(nilai: Record<string, unknown>) {
+    if (!state || !editing) return;
+    setAppState(updatePenilaian(state, editing.mahasiswaId, nilai));
+    setEditing(null);
+  }
 
   return (
     <div className="space-y-5">
@@ -40,17 +51,8 @@ export function PenilaianManager({ initialData }: { initialData: PenilaianRow[] 
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Penilaian</h1>
           <p className="mt-1 text-sm text-muted">Nilai C1&ndash;C5 setiap mahasiswa sebagai input PROMETHEE.</p>
         </div>
-        <ImportButton onImported={() => router.refresh()} />
+        <ImportButton />
       </div>
-
-      {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="shrink-0 rounded p-1 hover:bg-red-100" aria-label="Tutup pesan error">
-            <IconX className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       <div className="relative max-w-sm">
         <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -104,7 +106,7 @@ export function PenilaianManager({ initialData }: { initialData: PenilaianRow[] 
                         <IconPencil className="h-4 w-4" />
                       </button>
                       <Link
-                        href={`/penilaian/${r.mahasiswaId}`}
+                        href={`/penilaian/detail?id=${r.mahasiswaId}`}
                         aria-label={`Lihat detail ${r.nama}`}
                         title="Detail"
                         className="rounded-md p-2 text-slate-500 transition-colors hover:bg-muted-bg hover:text-slate-900"
@@ -127,45 +129,16 @@ export function PenilaianManager({ initialData }: { initialData: PenilaianRow[] 
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
-        <span>
-          Menampilkan <span className="font-medium text-slate-700">{pageRows.length}</span> dari{' '}
-          <span className="font-medium text-slate-700">{filtered.length}</span> mahasiswa
-        </span>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            aria-label="Halaman sebelumnya"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <IconChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="min-w-[5rem] text-center font-medium text-slate-700">
-            {page} / {totalPages}
-          </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            aria-label="Halaman berikutnya"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface transition-colors hover:bg-muted-bg disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <IconChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        shown={pageRows.length}
+        total={filtered.length}
+        page={currentPage}
+        totalPages={totalPages}
+        onPrev={() => setPage(currentPage - 1)}
+        onNext={() => setPage(currentPage + 1)}
+      />
 
-      {editing && (
-        <PenilaianFormModal
-          row={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            router.refresh();
-          }}
-          onError={setError}
-        />
-      )}
+      {editing && <PenilaianFormModal row={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
     </div>
   );
 }
@@ -173,51 +146,31 @@ export function PenilaianManager({ initialData }: { initialData: PenilaianRow[] 
 function PenilaianFormModal({
   row,
   onClose,
-  onSaved,
-  onError,
+  onSave,
 }: {
   row: PenilaianRow;
   onClose: () => void;
-  onSaved: () => void;
-  onError: (msg: string) => void;
+  onSave: (nilai: Record<string, unknown>) => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const k of KRITERIA_KODE) initial[k] = row.nilai[k] != null ? String(row.nilai[k]) : '';
     return initial;
   });
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    const nilai: Record<string, number> = {};
     for (const k of KRITERIA_KODE) {
-      const raw = values[k].trim();
-      if (raw === '' || Number.isNaN(Number(raw))) {
-        onError(`Nilai ${k} (${KRITERIA_LABEL[k]}) wajib diisi dengan angka`);
+      if (values[k].trim() === '') {
+        setError(`Nilai ${k} (${KRITERIA_LABEL[k]}) wajib diisi`);
         return;
       }
-      nilai[k] = Number(raw);
     }
-
-    setSaving(true);
     try {
-      const res = await fetch(`/api/penilaian/${row.mahasiswaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nilai }),
-      });
-      const body = await res.json().catch(() => ({ error: 'Gagal menyimpan nilai' }));
-      if (!res.ok) {
-        onError(body.error ?? 'Gagal menyimpan nilai');
-        return;
-      }
-      onSaved();
-    } catch {
-      onError('Gagal menghubungi server. Coba lagi.');
-    } finally {
-      setSaving(false);
+      onSave(values);
+    } catch (err) {
+      setError((err as Error).message);
     }
   }
 
@@ -236,6 +189,11 @@ function PenilaianFormModal({
             <IconX className="h-5 w-5" />
           </button>
         </div>
+        {error && (
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-3">
           {KRITERIA_KODE.map((k) => (
             <div key={k}>
@@ -257,10 +215,9 @@ function PenilaianFormModal({
           </button>
           <button
             type="submit"
-            disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            {saving ? 'Menyimpan...' : 'Simpan'}
+            Simpan
           </button>
         </div>
       </form>

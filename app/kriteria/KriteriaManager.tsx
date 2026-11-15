@@ -1,14 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Kriteria } from '@/lib/types';
+import { useAppState, setAppState } from '@/lib/useAppState';
+import { updateKriteria, type KriteriaInput } from '@/lib/store';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { IconPencil, IconX } from '@/components/icons';
 
-export function KriteriaManager({ initialData }: { initialData: Kriteria[] }) {
-  const router = useRouter();
+export function KriteriaManager() {
+  const state = useAppState();
   const [editing, setEditing] = useState<Kriteria | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  if (!state) return <PageSkeleton />;
+  const initialData = [...state.kriteria].sort((a, b) => a.kode.localeCompare(b.kode));
+
+  function handleSave(input: KriteriaInput) {
+    if (!state || !editing) return;
+    setAppState(updateKriteria(state, editing.id, input));
+    setEditing(null);
+  }
 
   return (
     <div className="space-y-5">
@@ -17,14 +27,6 @@ export function KriteriaManager({ initialData }: { initialData: Kriteria[] }) {
         <p className="mt-1 text-sm text-muted">Bobot dan fungsi preferensi lima kriteria penilaian PROMETHEE.</p>
       </div>
 
-      {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="shrink-0 rounded p-1 hover:bg-red-100" aria-label="Tutup pesan error">
-            <IconX className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
         <div className="overflow-x-auto">
@@ -76,17 +78,7 @@ export function KriteriaManager({ initialData }: { initialData: Kriteria[] }) {
         </div>
       </div>
 
-      {editing && (
-        <KriteriaFormModal
-          kriteria={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            router.refresh();
-          }}
-          onError={setError}
-        />
-      )}
+      {editing && <KriteriaFormModal kriteria={editing} onClose={() => setEditing(null)} onSave={handleSave} />}
     </div>
   );
 }
@@ -94,45 +86,30 @@ export function KriteriaManager({ initialData }: { initialData: Kriteria[] }) {
 function KriteriaFormModal({
   kriteria,
   onClose,
-  onSaved,
-  onError,
+  onSave,
 }: {
   kriteria: Kriteria;
   onClose: () => void;
-  onSaved: () => void;
-  onError: (msg: string) => void;
+  onSave: (input: KriteriaInput) => void;
 }) {
   const [bobot, setBobot] = useState(String(kriteria.bobot));
   const [jenis, setJenis] = useState(kriteria.jenis);
   const [preferenceFunction, setPreferenceFunction] = useState(kriteria.preferenceFunction);
   const [parameterP, setParameterP] = useState(kriteria.parameterP != null ? String(kriteria.parameterP) : '');
-  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     try {
-      const res = await fetch(`/api/kriteria/${kriteria.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nama: kriteria.nama,
-          jenis,
-          bobot: Number(bobot),
-          preferenceFunction,
-          parameterP: preferenceFunction === 'linear' ? Number(parameterP) : null,
-        }),
+      onSave({
+        nama: kriteria.nama,
+        jenis,
+        bobot: bobot.trim() === '' ? NaN : Number(bobot),
+        preferenceFunction,
+        parameterP: preferenceFunction === 'linear' ? (parameterP.trim() === '' ? null : Number(parameterP)) : null,
       });
-      const body = await res.json().catch(() => ({ error: 'Gagal menyimpan kriteria' }));
-      if (!res.ok) {
-        onError(body.error ?? 'Gagal menyimpan kriteria');
-        return;
-      }
-      onSaved();
-    } catch {
-      onError('Gagal menghubungi server. Coba lagi.');
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      setError((err as Error).message);
     }
   }
 
@@ -151,6 +128,11 @@ function KriteriaFormModal({
             <IconX className="h-5 w-5" />
           </button>
         </div>
+        {error && (
+          <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div>
           <label className="block text-sm font-medium text-slate-700">Jenis</label>
           <select
@@ -200,10 +182,9 @@ function KriteriaFormModal({
           </button>
           <button
             type="submit"
-            disabled={saving}
-            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            {saving ? 'Menyimpan...' : 'Simpan'}
+            Simpan
           </button>
         </div>
       </form>

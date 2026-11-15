@@ -1,30 +1,42 @@
-import { getDb } from '@/lib/db';
+'use client';
+
+import { useAppState, resetAppState } from '@/lib/useAppState';
+import { getRankingRows } from '@/lib/store';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { IconUsers, IconSliders, IconClipboard, IconMedal, IconCheckCircle, IconAlertTriangle } from '@/components/icons';
 
-export const dynamic = 'force-dynamic';
-
 export default function DashboardPage() {
-  const db = getDb();
-  const mahasiswaCount = (db.prepare('SELECT COUNT(*) as c FROM mahasiswa').get() as { c: number }).c;
-  const kriteriaCount = (db.prepare('SELECT COUNT(*) as c FROM kriteria').get() as { c: number }).c;
-  const penilaianCount = (db.prepare('SELECT COUNT(*) as c FROM penilaian').get() as { c: number }).c;
-  const lastProcessed = db
-    .prepare('SELECT processed_at as processedAt FROM hasil_ranking ORDER BY id DESC LIMIT 1')
-    .get() as { processedAt: string } | undefined;
-  const top5 = db
-    .prepare(
-      `SELECT h.ranking as ranking, m.alt_code as altCode, m.nama as nama, h.net_flow as netFlow
-       FROM hasil_ranking h JOIN mahasiswa m ON m.id = h.mahasiswa_id
-       ORDER BY h.ranking ASC, m.alt_code ASC LIMIT 5`
-    )
-    .all() as { ranking: number; altCode: string; nama: string; netFlow: number }[];
+  const state = useAppState();
+  if (!state) return <PageSkeleton />;
+
+  const mahasiswaCount = state.mahasiswa.length;
+  const kriteriaCount = state.kriteria.length;
+  const penilaianCount = Object.values(state.penilaian).reduce((sum, nilai) => sum + Object.keys(nilai).length, 0);
+  const top5 = getRankingRows(state).slice(0, 5);
+
+  function handleReset() {
+    if (!confirm('Kembalikan semua data ke data awal (254 mahasiswa)? Perubahan yang kamu buat di browser ini akan hilang.')) return;
+    resetAppState();
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted">Ringkasan data dan status perhitungan PROMETHEE II.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted">Ringkasan data dan status perhitungan PROMETHEE II.</p>
+        </div>
+        <button
+          onClick={handleReset}
+          className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-muted-bg"
+        >
+          Reset ke data awal
+        </button>
       </div>
+
+      <p className="rounded-lg border border-border bg-muted-bg px-4 py-3 text-sm text-slate-600">
+        Perubahan data (tambah, edit, hapus, import, dan hasil proses) disimpan di browser ini saja dan tidak terlihat oleh pengunjung lain.
+      </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={IconUsers} label="Total Mahasiswa" value={mahasiswaCount} />
@@ -35,12 +47,12 @@ export default function DashboardPage() {
       <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
         <p className="text-sm font-medium text-slate-700">Status Proses PROMETHEE</p>
         <div className="mt-2 flex items-center gap-2">
-          {lastProcessed ? (
+          {state.processedAt ? (
             <>
               <IconCheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
               <p className="text-sm text-slate-900">
                 Terakhir diproses:{' '}
-                <span className="font-mono tabular-nums">{new Date(lastProcessed.processedAt).toLocaleString('id-ID')}</span>
+                <span className="font-mono tabular-nums">{new Date(state.processedAt).toLocaleString('id-ID')}</span>
               </p>
             </>
           ) : (

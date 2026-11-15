@@ -3,13 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=18.18.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "seed": "tsx scripts/seed.ts",
+    "seed:json": "tsx scripts/build-seed.ts",
     "test": "vitest run"
   },
   "dependencies": {

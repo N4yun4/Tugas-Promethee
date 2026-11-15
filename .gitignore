@@ -1,5 +1,8 @@
 node_modules/
 .next/
+out/
 data/
 *.db
 tmp-*.xlsx
+*.tsbuildinfo
+.playwright-mcp/
