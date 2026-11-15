@@ -6,3 +6,9 @@ data/
 tmp-*.xlsx
 *.tsbuildinfo
 .playwright-mcp/
+
+# Bahan laporan dan dokumen kerja: tidak dipakai oleh web
+Laporan_Gabungan_Kelompok_3_dan_4_PROMETHEE.pdf
+PROMETHEE_Matriks_Keputusan.xlsx
+Preference_Index_254.xlsx
+docs/
