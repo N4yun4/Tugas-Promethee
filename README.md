@@ -1,6 +1,6 @@
-# SPK Penentuan Peringkat Mahasiswa (PROMETHEE II)
+# SPK Penentuan Peringkat Mahasiswa (TOPSIS)
 
-Aplikasi web Sistem Pendukung Keputusan untuk meranking 254 mahasiswa Teknologi Rekayasa Komputer berdasarkan lima kriteria (kehadiran, alfa, izin, sakit, dan IPK) dengan metode **PROMETHEE II**. Hasil perhitungannya sama persis dengan acuan Kelompok 3 (`Ranking_PROMETHEE.xlsx`).
+Aplikasi web Sistem Pendukung Keputusan untuk meranking 254 mahasiswa Teknologi Rekayasa Komputer berdasarkan lima kriteria (kehadiran, alfa, izin, sakit, dan IPK) dengan metode **TOPSIS** (*Technique for Order of Preference by Similarity to Ideal Solution*). Data mahasiswa, nilai, dan bobot Rank Sum sama dengan laporan; yang diganti hanya metode perhitungannya.
 
 Versi online: **https://n4yun4.github.io/Tugas-Promethee/**
 
@@ -87,8 +87,8 @@ Untuk menjalankan lagi lain kali, cukup ulangi langkah 4 dan 5. Langkah 1–3 ti
 ## Cara memakai aplikasi
 
 1. **Dashboard** — menampilkan ringkasan data: 254 mahasiswa, 5 kriteria, dan 1270 nilai.
-2. **Proses PROMETHEE** — klik **Jalankan Proses** untuk menghitung leaving flow, entering flow, dan net flow.
-3. **Hasil Ranking** — menampilkan peringkat seluruh mahasiswa, diurutkan dari net flow tertinggi. Peringkat #1 adalah Muhammad Syeh Pullah (0.458995).
+2. **Proses TOPSIS** — klik **Jalankan Proses** untuk menghitung jarak ke solusi ideal (D+ dan D−) dan nilai preferensi (V). Solusi ideal A+ dan A− hasil proses terakhir ditampilkan di halaman ini.
+3. **Hasil Ranking** — menampilkan peringkat seluruh mahasiswa, diurutkan dari nilai preferensi tertinggi. Peringkat #1 adalah Muhammad Syeh Pullah (V = 1,000000).
 4. **Laporan** — pratinjau laporan, cetak atau simpan sebagai PDF, dan export hasil ranking ke Excel.
 5. **Data Mahasiswa / Data Kriteria / Data Penilaian** — menambah, mengubah, menghapus, dan mengimpor data dari Excel.
 
@@ -100,7 +100,7 @@ Untuk menjalankan lagi lain kali, cukup ulangi langkah 4 dan 5. Langkah 1–3 ti
 
 | Perintah | Kegunaan |
 |---|---|
-| `npm test` | Menjalankan test otomatis, termasuk pengecekan bahwa hasil ranking sama dengan `Ranking_PROMETHEE.xlsx`. |
+| `npm test` | Menjalankan test otomatis, termasuk pengecekan perhitungan TOPSIS terhadap contoh jurnal dan pustaka `pymcdm` (lihat bagian Metode TOPSIS). |
 | `npm run build` | Membuat versi siap-online (file statis) di folder `out/`. |
 | `npm run seed:json` | Membuat ulang data awal (`lib/seed-data.json`) dari `dataset_promethee.xlsx` sheet `03_Matriks_Keputusan`. Jalankan ini kalau isi Excel-nya diubah. |
 
@@ -127,9 +127,25 @@ Program lain (atau `npm run dev` yang masih jalan di terminal lain) sedang memak
 Pastikan internet stabil, lalu jalankan ulang `npm install`.
 
 **Data terlihat berbeda / ranking hilang**
-Data tersimpan per browser. Jalankan **Proses PROMETHEE** lagi, atau klik **Reset ke data awal** di Dashboard.
+Data tersimpan per browser. Jalankan **Proses TOPSIS** lagi, atau klik **Reset ke data awal** di Dashboard.
 
 ---
+
+## Metode TOPSIS
+
+Langkah perhitungan mengikuti Hwang & Yoon (1981), *Multiple Attribute Decision Making: Methods and Applications*:
+
+1. **Matriks keputusan** X: nilai C1–C5 setiap mahasiswa.
+2. **Normalisasi vektor**: r_ij = x_ij / √(Σ x_ij²).
+3. **Normalisasi terbobot**: y_ij = w_j × r_ij, dengan bobot Rank Sum C1 0,133333; C2 0,333333; C3 0,266667; C4 0,2; C5 0,066667.
+4. **Solusi ideal**: untuk kriteria benefit (C1 Kehadiran, C5 IPK) A+ = nilai maksimum dan A− = minimum; untuk kriteria cost (C2 Alfa, C3 Izin, C4 Sakit) sebaliknya.
+5. **Jarak Euclidean**: D+ = √Σ(y_ij − A+_j)² dan D− = √Σ(y_ij − A−_j)².
+6. **Nilai preferensi**: V_i = D− / (D+ + D−). Ranking diurutkan dari V terbesar; nilai yang sama mendapat peringkat yang sama.
+
+Kebenaran perhitungan diuji di `lib/topsis.test.ts`:
+
+- mereproduksi contoh perhitungan jurnal Hanin, Dhandio & Zaria (2023), *JISKA* 8(1), doi:10.14421/jiska.2023.8.1.50-65 (pembagi, A+, A−, D+, D−, dan V);
+- hasil untuk 254 mahasiswa sama dengan pustaka Python independen [pymcdm](https://pypi.org/project/pymcdm/) (`lib/__fixtures__/topsis-pymcdm-254.json`).
 
 ## Teknologi
 

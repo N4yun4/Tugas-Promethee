@@ -21,6 +21,4 @@ export interface Kriteria {
   nama: string;
   jenis: 'benefit' | 'cost';
   bobot: number;
-  preferenceFunction: 'usual' | 'linear';
-  parameterP: number | null;
 }

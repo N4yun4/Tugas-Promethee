@@ -7,14 +7,14 @@ import { runProses } from '@/lib/store';
 import { IconPlay, IconCheckCircle, IconAlertTriangle, IconTrophy, IconChevronRight } from '@/components/icons';
 
 const TAHAPAN = [
-  'Pemeriksaan data mahasiswa',
-  'Pemeriksaan data kriteria',
-  'Bobot kriteria',
-  'Preference Function',
-  'Preference Index',
-  'Leaving Flow',
-  'Entering Flow',
-  'Net Flow',
+  'Pemeriksaan data mahasiswa dan kriteria',
+  'Matriks keputusan (X)',
+  'Normalisasi matriks (R)',
+  'Normalisasi terbobot (Y)',
+  'Solusi ideal positif (A+) dan negatif (A−)',
+  'Jarak ke solusi ideal (D+ dan D−)',
+  'Nilai preferensi (V)',
+  'Perankingan',
 ];
 
 const MIN_VISIBLE_MS = TAHAPAN.length * 180;
@@ -53,7 +53,7 @@ export default function ProsesPage() {
       setActiveStep(TAHAPAN.length);
       setResult({ alternatifCount: outcome.alternatifCount, durationMs: outcome.durationMs, processedAt: outcome.processedAt });
     } catch (err) {
-      setError((err as Error).message || 'Proses PROMETHEE gagal');
+      setError((err as Error).message || 'Proses TOPSIS gagal');
       setActiveStep(0);
     } finally {
       if (stepTimer.current) clearInterval(stepTimer.current);
@@ -66,8 +66,8 @@ export default function ProsesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="page-title">Proses PROMETHEE</h1>
-        <p className="page-subtitle">Hitung leaving flow, entering flow, dan net flow untuk seluruh mahasiswa.</p>
+        <h1 className="page-title">Proses TOPSIS</h1>
+        <p className="page-subtitle">Hitung jarak ke solusi ideal positif dan negatif serta nilai preferensi seluruh mahasiswa.</p>
       </div>
 
       <div className="card p-5">
@@ -112,6 +112,47 @@ export default function ProsesPage() {
             <span className="font-mono">{result.durationMs} ms</span>. Diproses pada{' '}
             <span className="font-mono">{new Date(result.processedAt).toLocaleString('id-ID')}</span>.
           </span>
+        </div>
+      )}
+
+      {state?.solusiIdeal && (
+        <div className="card overflow-hidden">
+          <div className="px-5 pt-4">
+            <p className="text-sm font-bold text-ink">Solusi Ideal (proses terakhir)</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Nilai pada matriks ternormalisasi terbobot. Benefit: A+ = maks, A− = min. Cost: A+ = min, A− = maks.
+            </p>
+          </div>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="table-head">
+                <tr>
+                  <th className="px-4 py-2.5">Solusi</th>
+                  {[...state.kriteria]
+                    .sort((a, b) => a.kode.localeCompare(b.kode))
+                    .map((k) => (
+                      <th key={k.kode} className="px-4 py-2.5 text-right">
+                        {k.kode} <span className="font-normal capitalize text-muted">({k.jenis})</span>
+                      </th>
+                    ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(['positif', 'negatif'] as const).map((jenis) => (
+                  <tr key={jenis} className="table-row">
+                    <td className="px-4 py-2.5 font-semibold text-ink">{jenis === 'positif' ? 'A+ (ideal positif)' : 'A− (ideal negatif)'}</td>
+                    {[...state.kriteria]
+                    .sort((a, b) => a.kode.localeCompare(b.kode))
+                      .map((k) => (
+                        <td key={k.kode} className="px-4 py-2.5 text-right font-mono tabular-nums text-slate-700">
+                          {state.solusiIdeal![jenis][k.kode]?.toFixed(6) ?? '-'}
+                        </td>
+                      ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

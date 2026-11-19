@@ -68,22 +68,22 @@ export interface RankingExportRow {
   altCode: string;
   nim: string;
   nama: string;
-  leavingFlow: number;
-  enteringFlow: number;
-  netFlow: number;
+  dPlus: number;
+  dMinus: number;
+  preferensi: number;
 }
 
 export async function generateRankingExcel(rows: RankingExportRow[]): Promise<Uint8Array> {
   const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Ranking PROMETHEE');
+  const sheet = workbook.addWorksheet('Ranking TOPSIS');
   sheet.columns = [
     { header: 'Ranking', key: 'ranking', width: 10 },
     { header: 'Alternatif', key: 'altCode', width: 12 },
     { header: 'NIM', key: 'nim', width: 15 },
     { header: 'Nama', key: 'nama', width: 30 },
-    { header: 'Leaving Flow', key: 'leavingFlow', width: 15 },
-    { header: 'Entering Flow', key: 'enteringFlow', width: 15 },
-    { header: 'Net Flow', key: 'netFlow', width: 15 },
+    { header: 'D+', key: 'dPlus', width: 15 },
+    { header: 'D-', key: 'dMinus', width: 15 },
+    { header: 'Nilai Preferensi (V)', key: 'preferensi', width: 20 },
   ];
   rows.forEach((r) => sheet.addRow(r));
   const buffer = await workbook.xlsx.writeBuffer();

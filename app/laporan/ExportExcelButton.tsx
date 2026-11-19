@@ -15,7 +15,7 @@ export function ExportExcelButton() {
     setError(null);
     const rows = getRankingRows(state);
     if (rows.length === 0) {
-      setError('Belum ada hasil ranking. Jalankan Proses PROMETHEE terlebih dahulu.');
+      setError('Belum ada hasil ranking. Jalankan Proses TOPSIS terlebih dahulu.');
       return;
     }
     setBusy(true);
@@ -26,7 +26,7 @@ export function ExportExcelButton() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Ranking_PROMETHEE.xlsx';
+      link.download = 'Ranking_TOPSIS.xlsx';
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {

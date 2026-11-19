@@ -51,7 +51,7 @@ export function PenilaianManager() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Data Penilaian</h1>
-          <p className="page-subtitle">Nilai C1&ndash;C5 setiap mahasiswa sebagai input PROMETHEE.</p>
+          <p className="page-subtitle">Nilai C1&ndash;C5 setiap mahasiswa sebagai input TOPSIS.</p>
         </div>
         <ImportButton />
       </div>

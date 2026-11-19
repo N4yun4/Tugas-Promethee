@@ -53,7 +53,7 @@ export function MahasiswaManager() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Data Mahasiswa</h1>
-          <p className="page-subtitle">Kelola alternatif yang diproses dalam PROMETHEE II.</p>
+          <p className="page-subtitle">Kelola alternatif yang diproses dalam TOPSIS.</p>
         </div>
         <button
           onClick={() => {

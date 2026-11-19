@@ -1,4 +1,4 @@
-import { runPromethee, type Alternatif, type Kriteria as EngineKriteria } from './promethee';
+import { runTopsis, type Alternatif, type Kriteria as EngineKriteria, type SolusiIdeal } from './topsis';
 import type { Mahasiswa, Kriteria, PenilaianRow } from './types';
 import type { MatriksRow } from './excel';
 
@@ -7,9 +7,12 @@ const DEFAULT_PROGRAM_STUDI = 'Teknologi Rekayasa Komputer';
 
 export interface HasilRanking {
   mahasiswaId: number;
-  leavingFlow: number;
-  enteringFlow: number;
-  netFlow: number;
+  /** Jarak ke solusi ideal positif (D+). */
+  dPlus: number;
+  /** Jarak ke solusi ideal negatif (D-). */
+  dMinus: number;
+  /** Nilai preferensi V = D- / (D+ + D-). */
+  preferensi: number;
   ranking: number;
 }
 
@@ -20,12 +23,13 @@ export interface RankingRow extends HasilRanking {
 }
 
 export interface AppState {
-  version: 1;
+  version: 2;
   nextMahasiswaId: number;
   mahasiswa: Mahasiswa[];
   kriteria: Kriteria[];
   penilaian: Record<number, Record<string, number>>;
   hasilRanking: HasilRanking[];
+  solusiIdeal: SolusiIdeal | null;
   processedAt: string | null;
 }
 
@@ -107,8 +111,6 @@ export interface KriteriaInput {
   nama?: string;
   jenis: 'benefit' | 'cost';
   bobot: number;
-  preferenceFunction: 'usual' | 'linear';
-  parameterP: number | null;
 }
 
 export function updateKriteria(state: AppState, id: number, input: KriteriaInput): AppState {
@@ -116,12 +118,6 @@ export function updateKriteria(state: AppState, id: number, input: KriteriaInput
   if (!existing) throw new StoreError('Kriteria tidak ditemukan');
   if (input.jenis !== 'benefit' && input.jenis !== 'cost') {
     throw new StoreError("Jenis harus 'benefit' atau 'cost'");
-  }
-  if (input.preferenceFunction !== 'usual' && input.preferenceFunction !== 'linear') {
-    throw new StoreError("Preference function harus 'usual' atau 'linear'");
-  }
-  if (input.preferenceFunction === 'linear' && (typeof input.parameterP !== 'number' || !(input.parameterP > 0))) {
-    throw new StoreError('Parameter p wajib diisi dengan angka positif untuk fungsi Linear');
   }
   if (typeof input.bobot !== 'number' || !(input.bobot > 0)) {
     throw new StoreError('Bobot harus berupa angka positif');
@@ -131,8 +127,6 @@ export function updateKriteria(state: AppState, id: number, input: KriteriaInput
     nama: input.nama || existing.nama,
     jenis: input.jenis,
     bobot: input.bobot,
-    preferenceFunction: input.preferenceFunction,
-    parameterP: input.preferenceFunction === 'usual' ? null : input.parameterP,
   };
   return { ...state, kriteria: state.kriteria.map((k) => (k.id === id ? updated : k)) };
 }
@@ -202,8 +196,6 @@ export function runProses(
     kode: k.kode,
     jenis: k.jenis,
     bobot: k.bobot,
-    preferenceFunction: k.preferenceFunction,
-    parameterP: k.parameterP,
   }));
 
   const alternatifList: Alternatif[] = state.mahasiswa.map((m) => {
@@ -215,19 +207,29 @@ export function runProses(
   });
 
   const start = Date.now();
-  const result = runPromethee(alternatifList, engineKriteria);
+  let output: ReturnType<typeof runTopsis>;
+  try {
+    output = runTopsis(alternatifList, engineKriteria);
+  } catch (err) {
+    throw new StoreError((err as Error).message);
+  }
   const durationMs = Date.now() - start;
   const processedAt = now.toISOString();
 
-  const hasilRanking: HasilRanking[] = result.map((r) => ({
+  const hasilRanking: HasilRanking[] = output.hasil.map((r) => ({
     mahasiswaId: Number(r.id),
-    leavingFlow: r.leavingFlow,
-    enteringFlow: r.enteringFlow,
-    netFlow: r.netFlow,
+    dPlus: r.dPlus,
+    dMinus: r.dMinus,
+    preferensi: r.preferensi,
     ranking: r.ranking,
   }));
 
-  return { state: { ...state, hasilRanking, processedAt }, alternatifCount: alternatifList.length, durationMs, processedAt };
+  return {
+    state: { ...state, hasilRanking, solusiIdeal: output.solusiIdeal, processedAt },
+    alternatifCount: alternatifList.length,
+    durationMs,
+    processedAt,
+  };
 }
 
 export function getMahasiswaSorted(state: AppState): Mahasiswa[] {

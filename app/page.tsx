@@ -25,7 +25,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Ringkasan data dan status perhitungan PROMETHEE II.</p>
+          <p className="page-subtitle">Ringkasan data dan status perhitungan TOPSIS.</p>
         </div>
         <button
           onClick={handleReset}
@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
       <div className="card flex flex-wrap items-center justify-between gap-4 p-5">
         <div>
-          <p className="text-sm font-bold text-ink">Status Proses PROMETHEE</p>
+          <p className="text-sm font-bold text-ink">Status Proses TOPSIS</p>
           <div className="mt-1.5 flex items-center gap-2">
             {state.processedAt ? (
               <>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
                   </span>
                   <span className="truncate font-semibold text-ink">{row.nama}</span>
                 </div>
-                <span className="shrink-0 font-mono text-sm tabular-nums text-slate-600">{row.netFlow.toFixed(6)}</span>
+                <span className="shrink-0 font-mono text-sm tabular-nums text-slate-600">{row.preferensi.toFixed(6)}</span>
               </li>
             ))}
           </ol>

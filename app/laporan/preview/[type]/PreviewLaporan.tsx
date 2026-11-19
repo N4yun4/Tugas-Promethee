@@ -13,7 +13,7 @@ const LABEL: Record<LaporanType, string> = {
   mahasiswa: 'Data Mahasiswa',
   kriteria: 'Data Kriteria',
   penilaian: 'Data Penilaian',
-  ranking: 'Hasil Ranking PROMETHEE',
+  ranking: 'Hasil Ranking TOPSIS',
 };
 
 export function PreviewLaporan({ type }: { type: LaporanType }) {
@@ -134,7 +134,7 @@ function ReportTable({ type, state }: { type: LaporanType; state: AppState }) {
 
   const rows = getRankingRows(state);
   if (rows.length === 0) {
-    return <p className="text-center text-sm text-muted">Belum ada hasil ranking. Jalankan Proses PROMETHEE terlebih dahulu.</p>;
+    return <p className="text-center text-sm text-muted">Belum ada hasil ranking. Jalankan Proses TOPSIS terlebih dahulu.</p>;
   }
   return (
     <table className="w-full text-left text-sm">
@@ -143,9 +143,9 @@ function ReportTable({ type, state }: { type: LaporanType; state: AppState }) {
           <th className={th}>Peringkat</th>
           <th className={th}>NIM</th>
           <th className={th}>Nama</th>
-          <th className={th}>Leaving</th>
-          <th className={th}>Entering</th>
-          <th className={th}>Net Flow</th>
+          <th className={th}>D+</th>
+          <th className={th}>D−</th>
+          <th className={th}>Preferensi (V)</th>
         </tr>
       </thead>
       <tbody>
@@ -154,9 +154,9 @@ function ReportTable({ type, state }: { type: LaporanType; state: AppState }) {
             <td className={td}>{r.ranking}</td>
             <td className={td}>{r.nim}</td>
             <td className={td}>{r.nama}</td>
-            <td className={`${td} font-mono`}>{r.leavingFlow.toFixed(6)}</td>
-            <td className={`${td} font-mono`}>{r.enteringFlow.toFixed(6)}</td>
-            <td className={`${td} font-mono`}>{r.netFlow.toFixed(6)}</td>
+            <td className={`${td} font-mono`}>{r.dPlus.toFixed(6)}</td>
+            <td className={`${td} font-mono`}>{r.dMinus.toFixed(6)}</td>
+            <td className={`${td} font-mono`}>{r.preferensi.toFixed(6)}</td>
           </tr>
         ))}
       </tbody>

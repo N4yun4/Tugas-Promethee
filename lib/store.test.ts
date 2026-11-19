@@ -1,6 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import path from 'path';
-import ExcelJS from 'exceljs';
 import {
   createMahasiswa,
   updateMahasiswa,
@@ -17,15 +15,17 @@ import {
 } from './store';
 import { createSeedState } from './seed';
 import { DEFAULT_KRITERIA } from './defaultKriteria';
+import acuanPymcdm from './__fixtures__/topsis-pymcdm-254.json';
 
 function emptyState(): AppState {
   return {
-    version: 1,
+    version: 2,
     nextMahasiswaId: 1,
     mahasiswa: [],
     kriteria: DEFAULT_KRITERIA.map((k, i) => ({ id: i + 1, nama: k.kode, ...k })),
     penilaian: {},
     hasilRanking: [],
+    solusiIdeal: null,
     processedAt: null,
   };
 }
@@ -113,30 +113,19 @@ describe('mahasiswa', () => {
 });
 
 describe('kriteria', () => {
-  const base = { nama: 'Kehadiran', jenis: 'benefit' as const, bobot: 0.2, preferenceFunction: 'linear' as const };
+  const base = { nama: 'Kehadiran', jenis: 'benefit' as const, bobot: 0.2 };
 
-  it('updates bobot', () => {
-    const state = emptyState();
-    const next = updateKriteria(state, 1, { ...base, parameterP: 20 });
+  it('updates bobot and jenis', () => {
+    const next = updateKriteria(emptyState(), 1, { ...base, jenis: 'cost' });
     expect(next.kriteria[0].bobot).toBe(0.2);
-  });
-
-  it('rejects a linear kriteria with missing, zero, or negative parameter p', () => {
-    const state = emptyState();
-    expect(() => updateKriteria(state, 1, { ...base, parameterP: null })).toThrow(/positif/);
-    expect(() => updateKriteria(state, 1, { ...base, parameterP: 0 })).toThrow(/positif/);
-    expect(() => updateKriteria(state, 1, { ...base, parameterP: -5 })).toThrow(/positif/);
+    expect(next.kriteria[0].jenis).toBe('cost');
   });
 
   it('rejects an invalid jenis and a non-positive bobot', () => {
     const state = emptyState();
-    expect(() => updateKriteria(state, 1, { ...base, jenis: 'invalid' as any, parameterP: 20 })).toThrow(/Jenis/);
-    expect(() => updateKriteria(state, 1, { ...base, bobot: 0, parameterP: 20 })).toThrow(/Bobot/);
-  });
-
-  it('clears parameter p when switching to usual', () => {
-    const next = updateKriteria(emptyState(), 1, { ...base, preferenceFunction: 'usual', parameterP: 20 });
-    expect(next.kriteria[0].parameterP).toBeNull();
+    expect(() => updateKriteria(state, 1, { ...base, jenis: 'invalid' as any })).toThrow(/Jenis/);
+    expect(() => updateKriteria(state, 1, { ...base, bobot: 0 })).toThrow(/Bobot/);
+    expect(() => updateKriteria(state, 1, { ...base, bobot: NaN })).toThrow(/Bobot/);
   });
 });
 
@@ -195,7 +184,7 @@ describe('runProses', () => {
   });
 
   it('replaces previous results instead of accumulating', () => {
-    let state = withStudents({ nim: '1', nama: 'Satu', nilai: FULL }, { nim: '2', nama: 'Dua', nilai: FULL });
+    let state = withStudents({ nim: '1', nama: 'Satu', nilai: FULL }, { nim: '2', nama: 'Dua', nilai: { ...FULL, C1: 50 } });
     state = runProses(state, new Date()).state;
     state = runProses(state, new Date()).state;
     expect(state.hasilRanking).toHaveLength(2);
@@ -210,24 +199,20 @@ describe('runProses', () => {
     expect(() => runProses(emptyState(), new Date())).toThrow(/mahasiswa/);
   });
 
-  it('reproduces Ranking_PROMETHEE.xlsx end-to-end from the seed state', async () => {
+  it('reports a clear error when every alternative is identical', () => {
+    const state = withStudents({ nim: '1', nama: 'Satu', nilai: FULL }, { nim: '2', nama: 'Dua', nilai: FULL });
+    expect(() => runProses(state, new Date())).toThrow(StoreError);
+  });
+
+  it('reproduces the independent pymcdm TOPSIS result end-to-end from the seed state', () => {
     const { state } = runProses(createSeedState(), new Date());
     const rows = getRankingRows(state);
     expect(rows).toHaveLength(254);
-    const byAlt = new Map(rows.map((r) => [r.altCode, r]));
-
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(path.join(process.cwd(), 'Ranking_PROMETHEE.xlsx'));
-    const sheet = workbook.getWorksheet('Sheet1')!;
-    let compared = 0;
-    sheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
-      const actual = byAlt.get(String(row.getCell(2).value))!;
-      expect(actual.ranking).toBe(Number(row.getCell(1).value));
-      expect(Math.abs(actual.netFlow - Number(row.getCell(5).value))).toBeLessThan(1e-6);
-      compared += 1;
-    });
-    expect(compared).toBe(254);
+    const acuan = acuanPymcdm.preferensi as Record<string, number>;
+    for (const r of rows) {
+      expect(Math.abs(r.preferensi - acuan[r.altCode]), r.altCode).toBeLessThan(1e-12);
+    }
     expect(rows[0].nama).toBe('Muhammad Syeh Pullah');
+    expect(state.solusiIdeal?.positif.C2).toBe(0);
   });
 });

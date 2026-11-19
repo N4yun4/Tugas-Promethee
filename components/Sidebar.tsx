@@ -21,7 +21,7 @@ const links = [
   { href: '/mahasiswa', label: 'Data Mahasiswa', icon: IconUsers },
   { href: '/kriteria', label: 'Data Kriteria', icon: IconSliders },
   { href: '/penilaian', label: 'Data Penilaian', icon: IconClipboard },
-  { href: '/proses', label: 'Proses PROMETHEE', icon: IconPlay },
+  { href: '/proses', label: 'Proses TOPSIS', icon: IconPlay },
   { href: '/ranking', label: 'Hasil Ranking', icon: IconTrophy },
   { href: '/laporan', label: 'Laporan', icon: IconFileText },
 ];
@@ -33,7 +33,7 @@ function Brand() {
         <span className="font-mono text-base font-semibold">Σ</span>
       </div>
       <div className="leading-tight">
-        <p className="text-sm font-extrabold tracking-wide text-white">SPK PROMETHEE</p>
+        <p className="text-sm font-extrabold tracking-wide text-white">SPK TOPSIS</p>
         <p className="text-xs text-indigo-300">Ranking Mahasiswa</p>
       </div>
     </div>
@@ -113,7 +113,7 @@ export function Sidebar() {
         </ul>
 
         <div className="m-3 rounded-2xl bg-white/5 p-4 text-xs text-indigo-200">
-          <p className="font-semibold text-white">Metode PROMETHEE II</p>
+          <p className="font-semibold text-white">Metode TOPSIS</p>
           <p className="mt-0.5">
             {state ? `${state.mahasiswa.length} mahasiswa · ${state.kriteria.length} kriteria` : 'Memuat data...'}
           </p>

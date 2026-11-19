@@ -25,7 +25,7 @@ export function KriteriaManager() {
     <div className="space-y-5">
       <div>
         <h1 className="page-title">Data Kriteria</h1>
-        <p className="page-subtitle">Bobot dan fungsi preferensi lima kriteria penilaian PROMETHEE.</p>
+        <p className="page-subtitle">Jenis (benefit/cost) dan bobot Rank Sum lima kriteria penilaian TOPSIS.</p>
       </div>
 
 
@@ -38,8 +38,6 @@ export function KriteriaManager() {
                 <th className="px-4 py-3">Kriteria</th>
                 <th className="px-4 py-3">Jenis</th>
                 <th className="px-4 py-3">Bobot</th>
-                <th className="px-4 py-3">Fungsi Preferensi</th>
-                <th className="px-4 py-3">Parameter p</th>
                 <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
@@ -60,8 +58,6 @@ export function KriteriaManager() {
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono tabular-nums text-slate-700">{k.bobot.toFixed(6)}</td>
-                  <td className="px-4 py-3 text-slate-600">{k.preferenceFunction === 'linear' ? 'Tipe III - Linear' : 'Tipe I - Usual'}</td>
-                  <td className="px-4 py-3 font-mono tabular-nums text-slate-700">{k.parameterP ?? '-'}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => setEditing(k)}
@@ -95,8 +91,6 @@ function KriteriaFormModal({
 }) {
   const [bobot, setBobot] = useState(String(kriteria.bobot));
   const [jenis, setJenis] = useState(kriteria.jenis);
-  const [preferenceFunction, setPreferenceFunction] = useState(kriteria.preferenceFunction);
-  const [parameterP, setParameterP] = useState(kriteria.parameterP != null ? String(kriteria.parameterP) : '');
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
@@ -106,8 +100,6 @@ function KriteriaFormModal({
         nama: kriteria.nama,
         jenis,
         bobot: bobot.trim() === '' ? NaN : Number(bobot),
-        preferenceFunction,
-        parameterP: preferenceFunction === 'linear' ? (parameterP.trim() === '' ? null : Number(parameterP)) : null,
       });
     } catch (err) {
       setError((err as Error).message);
@@ -153,30 +145,8 @@ function KriteriaFormModal({
             inputMode="decimal"
             className="input mt-1.5 font-mono"
           />
+          <p className="mt-1.5 text-xs text-muted">Harus berupa angka positif. Benefit: makin besar makin baik; cost: makin kecil makin baik.</p>
         </div>
-        <div>
-          <label className="label">Fungsi Preferensi</label>
-          <select
-            value={preferenceFunction}
-            onChange={(e) => setPreferenceFunction(e.target.value as 'usual' | 'linear')}
-            className="input mt-1.5"
-          >
-            <option value="usual">Tipe I - Usual</option>
-            <option value="linear">Tipe III - Linear</option>
-          </select>
-        </div>
-        {preferenceFunction === 'linear' && (
-          <div>
-            <label className="label">Parameter p</label>
-            <input
-              value={parameterP}
-              onChange={(e) => setParameterP(e.target.value)}
-              inputMode="decimal"
-              className="input mt-1.5 font-mono"
-            />
-            <p className="mt-1.5 text-xs text-muted">Harus berupa angka positif.</p>
-          </div>
-        )}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="btn-secondary">
             Batal

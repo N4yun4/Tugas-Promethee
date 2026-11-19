@@ -59,13 +59,13 @@ describe('parseMatriksKeputusanBuffer', () => {
 describe('generateRankingExcel', () => {
   it('writes all provided rows into the worksheet', async () => {
     const buffer = await generateRankingExcel([
-      { ranking: 1, altCode: 'A24', nim: '236661025', nama: 'Muhammad Syeh Pullah', leavingFlow: 0.458995, enteringFlow: 0, netFlow: 0.458995 },
+      { ranking: 1, altCode: 'A24', nim: '236661025', nama: 'Muhammad Syeh Pullah', dPlus: 0, dMinus: 0.198116, preferensi: 1 },
     ]);
     expect(Buffer.isBuffer(buffer)).toBe(false);
     expect(buffer).toBeInstanceOf(Uint8Array);
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer as any);
-    const sheet = workbook.getWorksheet('Ranking PROMETHEE')!;
+    const sheet = workbook.getWorksheet('Ranking TOPSIS')!;
     expect(sheet.rowCount).toBe(2);
     expect(sheet.getRow(2).getCell(2).value).toBe('A24');
   });

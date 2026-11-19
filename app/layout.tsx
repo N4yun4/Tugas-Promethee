@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/Sidebar';
 
 export const metadata: Metadata = {
   title: 'SPK Penentuan Peringkat Mahasiswa',
-  description: 'Sistem Pendukung Keputusan ranking mahasiswa dengan metode PROMETHEE II',
+  description: 'Sistem Pendukung Keputusan ranking mahasiswa dengan metode TOPSIS',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -6,7 +6,7 @@ const JENIS_LAPORAN = [
   { key: 'mahasiswa', label: 'Data Mahasiswa', description: 'Daftar seluruh alternatif (mahasiswa).', icon: IconUsers },
   { key: 'kriteria', label: 'Data Kriteria', description: 'Bobot dan fungsi preferensi tiap kriteria.', icon: IconSliders },
   { key: 'penilaian', label: 'Data Penilaian', description: 'Nilai C1–C5 setiap mahasiswa.', icon: IconClipboard },
-  { key: 'ranking', label: 'Hasil Ranking PROMETHEE', description: 'Peringkat akhir berdasarkan Net Flow.', icon: IconTrophy },
+  { key: 'ranking', label: 'Hasil Ranking TOPSIS', description: 'Peringkat akhir berdasarkan nilai preferensi (V).', icon: IconTrophy },
 ];
 
 export default function LaporanPage() {

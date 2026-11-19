@@ -28,12 +28,13 @@ export function createSeedState(): AppState {
   });
 
   return {
-    version: 1,
+    version: 2,
     nextMahasiswaId: rows.length + 1,
     mahasiswa,
     kriteria: DEFAULT_KRITERIA.map((k, index) => ({ id: index + 1, nama: KRITERIA_NAMA[k.kode], ...k })),
     penilaian,
     hasilRanking: [],
+    solusiIdeal: null,
     processedAt: null,
   };
 }

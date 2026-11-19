@@ -16,7 +16,7 @@ export default function RankingPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Hasil Ranking</h1>
-          <p className="page-subtitle">Diurutkan berdasarkan Net Flow dari yang tertinggi.</p>
+          <p className="page-subtitle">Diurutkan berdasarkan nilai preferensi TOPSIS (V) dari yang tertinggi.</p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-sm font-semibold text-primary">
           <IconTrophy className="h-4 w-4 text-accent" />
@@ -30,7 +30,7 @@ export default function RankingPage() {
           <p>
             Belum ada hasil. Jalankan perhitungan terlebih dahulu di halaman{' '}
             <Link href="/proses" className="font-medium underline">
-              Proses PROMETHEE
+              Proses TOPSIS
             </Link>
             .
           </p>
@@ -44,9 +44,9 @@ export default function RankingPage() {
                   <th className="px-4 py-3">Peringkat</th>
                   <th className="px-4 py-3">NIM</th>
                   <th className="min-w-[12rem] px-4 py-3">Nama</th>
-                  <th className="px-4 py-3 text-right">Leaving Flow</th>
-                  <th className="px-4 py-3 text-right">Entering Flow</th>
-                  <th className="px-4 py-3 text-right">Net Flow</th>
+                  <th className="px-4 py-3 text-right">D+</th>
+                  <th className="px-4 py-3 text-right">D−</th>
+                  <th className="px-4 py-3 text-right">Preferensi (V)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -62,11 +62,9 @@ export default function RankingPage() {
                     </td>
                     <td className="px-4 py-3 font-mono tabular-nums text-slate-700">{r.nim}</td>
                     <td className="px-4 py-3 font-medium text-slate-900">{r.nama}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-600">{r.leavingFlow.toFixed(6)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-600">{r.enteringFlow.toFixed(6)}</td>
-                    <td className={`px-4 py-3 text-right font-mono tabular-nums font-semibold ${r.netFlow >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                      {r.netFlow.toFixed(6)}
-                    </td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-600">{r.dPlus.toFixed(6)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-600">{r.dMinus.toFixed(6)}</td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-primary">{r.preferensi.toFixed(6)}</td>
                   </tr>
                 ))}
               </tbody>
